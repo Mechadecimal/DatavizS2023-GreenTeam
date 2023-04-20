@@ -9,8 +9,8 @@ var map_svg = d3.select("#map")
 
 // Define a projection for the map
 var projection = d3.geoMercator()
-.scale(550)
-.center([-78, 28]);
+.scale(540)
+.center([-78, 29]);
 // .translate([1.5 * mapWidth,mapHeight / 2]);
 
 // Create a path generator based on the projection
@@ -93,12 +93,6 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       // .attr("stroke-width", 3)
       .attr("fill-opacity", 0.6);
 
-    })
-    .catch(function(error) {
-      console.log("An error occured in humidity data");
-      console.log(error);
-    });
-
       // This function is gonna change the opacity and size of selected and unselected circles
       function update(){
     
@@ -109,7 +103,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
   
           // If the box is check, I show the group
           if(cb.property("checked")){
-            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", "4");
+            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", d => size(humidity_selected[0][d.City]));
   
           // Otherwise I hide it
           }else{
@@ -121,15 +115,23 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       // When a button change, I run the update function
       d3.selectAll(".checkbox").on("change",update);
 
+    })
+    .catch(function(error) {
+      console.log("An error occured in humidity data");
+      console.log(error);
+    });
+
+      
+
       d3.selectAll(".date").on("change",d => {
         var selectedDate = document.getElementById("myDate");
         console.log(selectedDate.value);
       });
 
-      d3.selectAll(".hour").on("change",d => {
-        var selectedHour = document.getElementById("myHour");
-        console.log(selectedHour.value);
-      });
+      // d3.selectAll(".hour").on("change",d => {
+      //   var selectedHour = document.getElementById("myHour");
+      //   console.log(selectedHour.value);
+      // });
     
       // And I initialize it at the beginning
       // update()
