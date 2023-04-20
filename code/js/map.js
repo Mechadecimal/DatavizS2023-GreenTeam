@@ -17,25 +17,26 @@ var projection = d3.geoMercator()
 var geopath = d3.geoPath()
 .projection(projection);
 
+/*  NOTE: By using the following nested structure we make sure geojson polygons stay in the background 
+    and cities are drawn on top of it */
+
+// US States Map
 d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
-  console.log(geojson);
   // Draw the map using the GeoJSON data
-  map_svg.selectAll("path")
+  map_svg.append("g")
+    .selectAll("path")
     .data(geojson.features)
-    .enter()
-    .append("path")
+    .join("path")
+    .attr("class", "state-polygon")
+    .attr("fill", "#b8b8b8")
     .attr("d", geopath)
-    .attr("fill", "#DDDCDC")
-    .attr("stroke", "#FFFFFF")
-    .attr("class", "country");
-})
-.catch(function(error) {
-  console.log("An error occured in geo data");
-  console.log(error);
-});
+    .attr("stroke", "white")
+    .attr("stroke-width", "2")
+    .style("opacity", "0.4")
 
-d3.csv("/data/clean_data/city_attributes.csv")
+  // Cities' locations
+  d3.csv("/data/clean_data/city_attributes.csv")
   .then(function(data) {
 
     console.log(data);
@@ -43,7 +44,6 @@ d3.csv("/data/clean_data/city_attributes.csv")
     // Extract the city names from the city_attributes.csv data
     // It has to be before type conversion!
     const cityNames = data.map(d => d.City).sort();
-    console.log(cityNames);
 
     const weatherAttributes = ["temperature", "humidity", "pressure", "wind speed"];
 
@@ -51,22 +51,34 @@ d3.csv("/data/clean_data/city_attributes.csv")
     populateDropdownMenu("#city-select", cityNames);
     populateDropdownMenu("#weather-attribute-select", weatherAttributes);
 
+    // Add circles:
+    map_svg
+      .append("g").style("z-index", "3")
+      .selectAll("myCircles")
+      .data(data)
+      .join("circle")
+      .attr("class", "city")
+      .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
+      .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
+      .attr("r", d => "5")
+      .style("fill", "black")
+      // .attr("stroke", "#BF4747")
+      // .attr("stroke-width", 3)
+      .attr("fill-opacity", 1)
 
-
-    // Convert numerical values to Number datatype
-    data = data.forEach(d => {
-      d.Latitude = +d.Latitude;
-      d.Longitude = +d.Longitude;
-    });
-
-    
-
-    
 
   })
   .catch(function(error) {
+    console.log("An error occured in city data");
     console.log(error);
   });
+
+})
+.catch(function(error) {
+  console.log("An error occured in geo data");
+  console.log(error);
+});
+
 
 // Function to populate a dropdown menu
 // id: id (string) of the dropdown menu in the index.html file
