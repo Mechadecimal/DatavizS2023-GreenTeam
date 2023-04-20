@@ -1,40 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>D3 Project</title>
-
-<p></p>
-
-<link rel="stylesheet" href="css/style.css">
-<!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
-     integrity="sha256-kLaT2GOSpHechhsozzB+flnD+zUyjE2LlfWPgU04xyI="
-     crossorigin=""/> -->
-</head>
-<body>
-
-<button id="startLine">Start Animation</button>
-<select id="selectButton"></select>
-
-<!-- <svg width="600" height="800"></svg> -->
-<!-- <div id="container"></div>
-<div id="container2"></div>
-<div id="container3"></div>
-<div id="container4"></div>
-<div id="map"></div> -->
-    
-
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<!-- <script src="//unpkg.com/d3-hexgrid"></script>
-<script src="//unpkg.com/d3-hexbin"></script>
-<script src="//unpkg.com/d3-contour"></script>
-<script src="//unpkg.com/d3-sankey"></script>
-<script src="//unpkg.com/d3"></script> -->
-<!-- <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
-     integrity="sha256-WBkoXOwTeyKclOHuWtc+i2uENFpDZ9YPdf5Hf+D7ewM="
-     crossorigin=""></script> -->
-<script src="js/partii.js"></script>
-<script type="text/javascript" src="js/config.js"></script>
-
-</body>
+     <head>
+          <meta charset="UTF-8">
+          <title>Sea Level and Weather Data</title>
+          <link rel="stylesheet" href="css/style.css">
+     </head>
+     <body>
+          <p>Select the city</p>
+          <div>
+               <select id="city-select"></select>
+          </div>
+          <p>Select the weather attribute</p>
+          <div>
+               <select id="weather-attribute-select"></select>
+          </div>
+          <script src="https://d3js.org/d3.v7.min.js"></script>
+          <script src="js/map.js"></script>
+     </body>
 </html>
