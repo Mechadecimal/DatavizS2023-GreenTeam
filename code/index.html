@@ -6,16 +6,35 @@
           <link rel="stylesheet" href="css/style.css">
      </head>
      <body>
-          <p>Select the city</p>
           <div>
-               <select id="city-select"></select>
+               <label>
+                    Select the city
+                    <select id="city-select"></select>
+               </label>
           </div>
-          <p>Select the weather attribute</p>
+          
           <div>
-               <select id="weather-attribute-select"></select>
+               <label>
+                    Select the weather attribute
+                    <select id="weather-attribute-select"></select>
+               </label>
           </div>
+          
           <div id="map-container">
-               <p>MAP GOES HERE</p>
+               <div>
+                    <input type="checkbox" class="checkbox" value="Cities" checked><label>Cities</label>
+                    <input type="checkbox" class="checkbox" value="Stations" unchecked><label>Stations</label>
+               </div>
+               <label>
+                    Enter the date
+                    <input type="date" class="date" id="myDate">
+               </label>
+               <label>
+                    Enter hour
+                    <input type="number" class="hour" id="myHour">
+               </label>
+               
+               <p></p> 
                <svg id="map"></svg>
           </div>
           <div>
