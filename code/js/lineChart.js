@@ -1,19 +1,21 @@
 // Constants setup
 
     // dimensions
-    var svgWidth  = 800;
-    var svgHeight = 600;
+    var lineChart_svgWidth  = 800;
+    var lineChart_svgHeight = 600;
 
-    var margin = {
+    var lineChart_margin = {
         top: 30,
         right: 20,
         bottom: 100,
         left:30
         },
 
-    width = svgWidth - chartMargin.right - chartMargin.left,
-    height = svgHeight - chartMargin.top - chartMargin.bottom;
+    width = lineChart_svgWidth - chartMargin.right - chartMargin.left,
+    height = lineChart_svgHeight - chartMargin.top - chartMargin.bottom;
 
+
+//Modify this file to the following framework; https://d3-graph-gallery.com/graph/line_change_data.html
 
 
 // Start of SVG
@@ -21,16 +23,18 @@
     // Create svg
     const lineChart_Svg = d3.select("#line-chart-container")
         .append("svg")
-        .attr("width", margin.width + margin.left + margin.right)
-        .attr("height", margin.height + margin.top + margin.bottom)
+        .attr("width", lineChart_margin.width + lineChart_margin.left + lineChart_margin.right)
+        .attr("height", lineChart_margin.height + lineChart_margin.top + lineChart_margin.bottom)
 
     // Create a chartGroup and nudge it to the top left
     var lineChart_Group = lineChart_Svg.append("g")
-        .attr("transform", `translate (${margin.left}, ${margin.top})`)
+        .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`)
 
     // Read data in
 
     d3.csv("[---insert filename here---]" , function(data) {
+
+        //retrieve date range and 
         
         // Create a list of the groups from the data
         var lineChart_Group = ["valueA", "valueB", "valueC"];
