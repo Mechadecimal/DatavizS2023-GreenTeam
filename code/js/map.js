@@ -37,13 +37,13 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
   // Cities' locations
   d3.csv("/data/clean_data/city_attributes.csv")
-  .then(function(data) {
+  .then(function(city_attr) {
 
-    console.log(data);
+    // console.log(city_attr);
 
     // Extract the city names from the city_attributes.csv data
     // It has to be before type conversion!
-    const cityNames = data.map(d => d.City).sort();
+    const cityNames = city_attr.map(d => d.City).sort();
 
     const weatherAttributes = ["temperature", "humidity", "pressure", "wind speed"];
 
@@ -51,20 +51,53 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
     populateDropdownMenu("#city-select", cityNames);
     populateDropdownMenu("#weather-attribute-select", weatherAttributes);
 
-    // Add circles:
-    map_svg
+    // Read the humidity data
+    d3.csv("data/clean_data/humidity.csv").then(function(humidity_data) {
+      console.log(humidity_data);
+
+      humidity_data.forEach(record => {
+        // Convert all values to float datatype
+        for (key in record) {
+          record[key] = parseFloat(record[key]);
+        }
+        record.year = parseInt(record.year);
+        record.month = parseInt(record.month);
+        record.day = parseInt(record.day);
+        // d.date = d.month + "-" + d.day + "-" + d.year;
+      });
+
+      // Select data for a specific date
+      humidity_selected = humidity_data.filter(d => {
+        return d.year == 2015 && d.month == 1 && d.day == 1;
+      });
+
+      console.log(humidity_selected[0]["Vancouver"]);
+
+       // Add a scale for bubble size
+       const size = d3.scaleLinear()
+       .domain([0,100])  // What's in the data
+       .range([0, 20])  // Size in pixel
+
+       // Add circles:
+      map_svg
       .append("g").style("z-index", "3")
       .selectAll("myCircles")
-      .data(data)
+      .data(city_attr)
       .join("circle")
       .attr("class", "Cities")
       .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
       .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-      .attr("r", d => "4")
+      .attr("r", d => size(humidity_selected[0][d.City])) //humidity_selected has the required object inside an array. So, we call index 0.
       .style("fill", "black")
       // .attr("stroke", "#BF4747")
       // .attr("stroke-width", 3)
-      .attr("fill-opacity", 1);
+      .attr("fill-opacity", 0.6);
+
+    })
+    .catch(function(error) {
+      console.log("An error occured in humidity data");
+      console.log(error);
+    });
 
       // This function is gonna change the opacity and size of selected and unselected circles
       function update(){
@@ -99,7 +132,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       });
     
       // And I initialize it at the beginning
-      update()
+      // update()
 
 
   })
@@ -127,111 +160,3 @@ function populateDropdownMenu(id, entries) {
     .text(d => d)
     .attr("value", d => d);
 }
-
-
-
-
-// var svgWidth  = 800;
-// var svgHeight = 600;
-// //note it is convention to do this clockwise
-
-// var chartMargin = {
-//   top: 60,
-//   right: 60,
-//   bottom: 60,
-//   left:100
-// };
-
-// //set the chart width by subtracting the right and left values of chartMargin from svgWidth
-// var chartWidth  = svgWidth - chartMargin.right - chartMargin.left;
-// //set the chart width by subtracting the top and bottom values of chartMargin from svgHeight
-// var chartHeight = svgHeight - chartMargin.top - chartMargin.bottom;
-
-// //create and append a new svg  - set width and height attributes to svgWidth and svgHeight
-// var svg = d3.select("body")
-//           .append("svg")
-//           .attr("height", svgHeight)
-//           .attr("width" , svgWidth);
-
-// //create a chartGroup and nudge it to the top left
-// var chartGroup = svg.append("g")
-//                     .attr("transform", `translate (${chartMargin.left}, ${chartMargin.top})`)
-
-
-// //parse the date - note the format is YYYY-MM-DD
-// var parseDate = d3.timeParse("%Y-%m-%d");
-
-// //set up our scale
-// var x = d3.scaleTime()
-// .range([0, chartWidth]);
-
-// var y = d3.scaleLinear()
-// .range([chartHeight, 0]);
-
-// //set up our Axes
-// var xAxis = d3.axisBottom()
-// .scale(x)
-
-// var yAxis = d3.axisLeft()
-// .scale(y)
-
-// var line = d3.line()
-// .x(function(d) { return x(d.date); })
-// .y(function(d) { return y(d.deaths); });
-
-
-// d3.csv("../UNRATE.csv").then(data => {
-// // CHECK your DATA
-// console.log("Hello", data);
-// //everything is a string - parse your date and set rate to a numeric value
-// data.forEach(function(d) {
-// d.date = parseDate(d.DATE);
-// d.rate = +d.UNRATE;
-// });
-
-// x.domain(d3.extent(data, function(d) { return d.date; }));
-// y.domain(d3.extent(data, function(d) { return d.rate; }));
-
-// chartGroup.append("g")
-//   .attr("class", "x axis")
-//   .attr("transform", "translate(0," + chartHeight + ")")
-//   .call(xAxis);
-
-//   chartGroup.append("text")
-//   .attr("class", "x label")
-//   .attr("text-anchor", "end")
-//   .attr("x", chartWidth)
-//   .attr("y", chartHeight - 6)
-//   .text("Year");
-
-// chartGroup.append("g")
-//   .attr("class", "y axis")
-//   .call(yAxis);
-
-
-// //BEGIN ADD CODE HERE
-// // ADD CODE BELOW THIS LINE
-// var path = chartGroup.append("path")
-//   .datum(data)
-//   .attr("class", "line")
-//   .attr("d", line)
-//   .style("stroke", "white")
-
-// var totalLength = path.node().getTotalLength();
-
-// d3.select("#startLine").on("click", function() {
-//   path
-//     .attr("stroke-dasharray", totalLength + " " + totalLength)
-//     .attr("stroke-dashoffset", totalLength)
-//     .transition()
-//       .duration(4000)
-//       .ease(d3.easeLinear)
-//       .attr("stroke-dashoffset", 0)
-//       .style("stroke", "steelblue")
-// })
-
-
-
-// //DO NOT ADD CODE BELOW THIS LINE
-
-// });
