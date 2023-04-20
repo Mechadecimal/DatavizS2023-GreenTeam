@@ -1,3 +1,40 @@
+// General setup (not data related)
+
+// Set up the map container
+var mapWidth = 600;
+var mapHeight = 300;
+var map_svg = d3.select("#map")
+.attr("width", mapWidth)
+.attr("height", mapHeight);
+
+// Define a projection for the map
+var projection = d3.geoMercator()
+.scale(550)
+.center([-78, 28]);
+// .translate([1.5 * mapWidth,mapHeight / 2]);
+
+// Create a path generator based on the projection
+var geopath = d3.geoPath()
+.projection(projection);
+
+d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
+
+  console.log(geojson);
+  // Draw the map using the GeoJSON data
+  map_svg.selectAll("path")
+    .data(geojson.features)
+    .enter()
+    .append("path")
+    .attr("d", geopath)
+    .attr("fill", "#DDDCDC")
+    .attr("stroke", "#FFFFFF")
+    .attr("class", "country");
+})
+.catch(function(error) {
+  console.log("An error occured in geo data");
+  console.log(error);
+});
+
 d3.csv("/data/clean_data/city_attributes.csv")
   .then(function(data) {
 
@@ -14,11 +51,15 @@ d3.csv("/data/clean_data/city_attributes.csv")
     populateDropdownMenu("#city-select", cityNames);
     populateDropdownMenu("#weather-attribute-select", weatherAttributes);
 
+
+
     // Convert numerical values to Number datatype
     data = data.forEach(d => {
       d.Latitude = +d.Latitude;
       d.Longitude = +d.Longitude;
     });
+
+    
 
     
 
