@@ -66,10 +66,14 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         // d.date = d.month + "-" + d.day + "-" + d.year;
       });
 
+      function updateDate(day, month, year) {
+        return humidity_data.filter(d => {
+          return d.year == year && d.month == month && d.day == day;
+        });
+      };
+      
       // Select data for a specific date
-      humidity_selected = humidity_data.filter(d => {
-        return d.year == 2015 && d.month == 1 && d.day == 1;
-      });
+      var humidity_selected = updateDate(1, 1, 2015);
 
       console.log(humidity_selected[0]["Vancouver"]);
 
@@ -79,19 +83,23 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
        .range([0, 20])  // Size in pixel
 
        // Add circles:
-      map_svg
-      .append("g").style("z-index", "3")
-      .selectAll("myCircles")
-      .data(city_attr)
-      .join("circle")
-      .attr("class", "Cities")
-      .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
-      .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-      .attr("r", d => size(humidity_selected[0][d.City])) //humidity_selected has the required object inside an array. So, we call index 0.
-      .style("fill", "black")
-      // .attr("stroke", "#BF4747")
-      // .attr("stroke-width", 3)
-      .attr("fill-opacity", 0.6);
+      function drawCircles() {
+        map_svg
+        .append("g").style("z-index", "3")
+        .selectAll("myCircles")
+        .data(city_attr)
+        .join("circle")
+        .attr("class", "Cities")
+        .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
+        .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
+        .attr("r", d => size(humidity_selected[0][d.City])) //humidity_selected has the required object inside an array. So, we call index 0.
+        .style("fill", "black")
+        // .attr("stroke", "#BF4747")
+        // .attr("stroke-width", 3)
+        .attr("fill-opacity", 0.6);
+      }
+
+      drawCircles();
 
       // This function is gonna change the opacity and size of selected and unselected circles
       function update(){
@@ -112,6 +120,19 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         })
       }
 
+      d3.selectAll(".date").on("change",d => {
+        var selectedDate = document.getElementById("myDate");
+        console.log(selectedDate.value);
+        const year = selectedDate.value.substring(0,4);
+        const month = selectedDate.value.substring(5,7);
+        const day = selectedDate.value.substring(8,10);
+        d3.selectAll("circle").remove();
+        humidity_selected = updateDate(day, month, year);
+        drawCircles();
+      });
+
+      
+
       // When a button change, I run the update function
       d3.selectAll(".checkbox").on("change",update);
 
@@ -120,13 +141,6 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       console.log("An error occured in humidity data");
       console.log(error);
     });
-
-      
-
-      d3.selectAll(".date").on("change",d => {
-        var selectedDate = document.getElementById("myDate");
-        console.log(selectedDate.value);
-      });
 
       // d3.selectAll(".hour").on("change",d => {
       //   var selectedHour = document.getElementById("myHour");
