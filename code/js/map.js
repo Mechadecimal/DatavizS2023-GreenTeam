@@ -87,6 +87,16 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
       // When a button change, I run the update function
       d3.selectAll(".checkbox").on("change",update);
+
+      d3.selectAll(".date").on("change",d => {
+        var selectedDate = document.getElementById("myDate");
+        console.log(selectedDate.value);
+      });
+
+      d3.selectAll(".hour").on("change",d => {
+        var selectedHour = document.getElementById("myHour");
+        console.log(selectedHour.value);
+      });
     
       // And I initialize it at the beginning
       update()
