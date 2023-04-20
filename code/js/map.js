@@ -57,14 +57,39 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       .selectAll("myCircles")
       .data(data)
       .join("circle")
-      .attr("class", "city")
+      .attr("class", "Cities")
       .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
       .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-      .attr("r", d => "5")
+      .attr("r", d => "4")
       .style("fill", "black")
       // .attr("stroke", "#BF4747")
       // .attr("stroke-width", 3)
-      .attr("fill-opacity", 1)
+      .attr("fill-opacity", 1);
+
+      // This function is gonna change the opacity and size of selected and unselected circles
+      function update(){
+    
+        // For each check box:
+        d3.selectAll(".checkbox").each(function(d){
+          cb = d3.select(this);
+          grp = cb.property("value");
+  
+          // If the box is check, I show the group
+          if(cb.property("checked")){
+            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", "4");
+  
+          // Otherwise I hide it
+          }else{
+            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 0).attr("r", 0);
+          }
+        })
+      }
+
+      // When a button change, I run the update function
+      d3.selectAll(".checkbox").on("change",update);
+    
+      // And I initialize it at the beginning
+      update()
 
 
   })
