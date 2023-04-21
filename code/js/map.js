@@ -36,124 +36,109 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
     .style("opacity", "0.4")
 
   // Cities' locations
-  d3.csv("/data/clean_data/city_attributes.csv")
-  .then(function(city_attr) {
+  d3.csv("/data/clean_data/cleaned_weather_data.csv")
+  .then(function(weatherData) {
 
-    // console.log(city_attr);
+    // console.log(weatherData);
 
     // Extract the city names from the city_attributes.csv data
     // It has to be before type conversion!
-    const cityNames = city_attr.map(d => d.City).sort();
+    const cityNames = weatherData.map(d => d.location).sort();
+    const cityNamesSet = new Set(cityNames); // To remove the many duplicates
 
     const weatherAttributes = ["temperature", "humidity", "pressure", "wind speed"];
 
     // Get the dropdown element and populate it with city names/weather attribute type
-    populateDropdownMenu("#city-select", cityNames);
+    populateDropdownMenu("#city-select", cityNamesSet);
     populateDropdownMenu("#weather-attribute-select", weatherAttributes);
 
-    // Read the humidity data
-    d3.csv("data/clean_data/humidity.csv").then(function(humidity_data) {
-      console.log(humidity_data);
+    var parseTime = d3.timeParse("%Y-%m-%d");
 
-      humidity_data.forEach(record => {
-        // Convert all values to float datatype
-        for (key in record) {
-          record[key] = parseFloat(record[key]);
-        }
-        record.year = parseInt(record.year);
-        record.month = parseInt(record.month);
-        record.day = parseInt(record.day);
-        // d.date = d.month + "-" + d.day + "-" + d.year;
-      });
-
-      function updateDate(day, month, year) {
-        return humidity_data.filter(d => {
-          return d.year == year && d.month == month && d.day == day;
-        });
-      };
-      
-      // Select data for a specific date
-      var humidity_selected = updateDate(1, 1, 2015);
-
-      console.log(humidity_selected[0]["Vancouver"]);
-
-       // Add a scale for bubble size
-       const size = d3.scaleLinear()
-       .domain([0,100])  // What's in the data
-       .range([0, 20])  // Size in pixel
-
-       // Add circles:
-      function drawCircles() {
-        map_svg
-        .append("g").style("z-index", "3")
-        .selectAll("myCircles")
-        .data(city_attr)
-        .join("circle")
-        .attr("class", "Cities")
-        .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
-        .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-        .attr("r", d => size(humidity_selected[0][d.City])) //humidity_selected has the required object inside an array. So, we call index 0.
-        .style("fill", "black")
-        // .attr("stroke", "#BF4747")
-        // .attr("stroke-width", 3)
-        .attr("fill-opacity", 0.6);
-      }
-
-      drawCircles();
-
-      // This function is gonna change the opacity and size of selected and unselected circles
-      function update(){
-    
-        // For each check box:
-        d3.selectAll(".checkbox").each(function(d){
-          cb = d3.select(this);
-          grp = cb.property("value");
-  
-          // If the box is check, I show the group
-          if(cb.property("checked")){
-            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", d => size(humidity_selected[0][d.City]));
-  
-          // Otherwise I hide it
-          }else{
-            map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 0).attr("r", 0);
-          }
-        })
-      }
-
-      d3.selectAll(".date").on("change",d => {
-        var selectedDate = document.getElementById("myDate");
-        console.log(selectedDate.value);
-        const year = selectedDate.value.substring(0,4);
-        const month = selectedDate.value.substring(5,7);
-        const day = selectedDate.value.substring(8,10);
-        d3.selectAll("circle").remove();
-        humidity_selected = updateDate(day, month, year);
-        drawCircles();
-      });
-
-      
-
-      // When a button change, I run the update function
-      d3.selectAll(".checkbox").on("change",update);
-
-    })
-    .catch(function(error) {
-      console.log("An error occured in humidity data");
-      console.log(error);
+    weatherData.forEach(d => {
+      // Convert string to numerical values for calculations
+      d.temperature = parseFloat(d.temperature);
+      d.humidity    = parseFloat(d.humidity);
+      d.pressure    = parseFloat(d.pressure);
+      d.wind_speed  = parseFloat(d.wind_speed);
+      // Convert time from string to a Date object
+      d.date        = parseTime(d.date);
     });
 
-      // d3.selectAll(".hour").on("change",d => {
-      //   var selectedHour = document.getElementById("myHour");
-      //   console.log(selectedHour.value);
-      // });
-    
-      // And I initialize it at the beginning
-      // update()
+    // This functions filters data based on the selected date
+    function updateDate(day, month, year) {
+      return weatherData.filter(d => {
+        // Be carefull: getMonth() is zero index => January = 0
+        return d.date.getFullYear() == year && (d.date.getMonth() + 1) == month && d.date.getDate() == day;
+      });
+    };
+      
+    // Choose a date for the default visualization
+    var weatherDataSelected = updateDate(1, 1, 2015);
 
+    // console.log(weatherDataSelected);
 
+    // Add a scale for bubble size
+    const size = d3.scaleLinear()
+    .domain([0,100])  // What's in the data
+    .range([0, 20])  // Size in pixel
+
+    // Add circles:
+    function drawCircles() {
+      map_svg
+      .append("g")
+      .selectAll("myCircles")
+      .data(weatherDataSelected)
+      .join("circle")
+      .attr("class", "Cities")
+      .attr("cx", d => projection([d.longitude, d.latitude])[0])
+      .attr("cy", d => projection([d.longitude, d.latitude])[1])
+      .attr("r", d => size(d.humidity))
+      .style("fill", "black")
+      .attr("fill-opacity", 0.6);
+    }
+
+    drawCircles();
+
+    // This function is gonna change the opacity and size of selected and unselected circles
+    function updateMap(){
+  
+      // For each check box:
+      d3.selectAll(".checkbox").each(function(d){
+        cb = d3.select(this);
+        grp = cb.property("value");
+
+        // If the box is check, I show the group
+        if(cb.property("checked")){
+          map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", d => size(d.humidity));
+
+        // Otherwise I hide it
+        }else{
+          map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 0).attr("r", 0);
+        }
+      })
+    }
+
+    d3.selectAll(".date").on("change",d => {
+      // get a reference to the date element
+      var selectedDate = document.getElementById("myDate");
+      console.log(selectedDate.value);
+      // get year, month and day as integers
+      const year  = parseInt(selectedDate.value.substring(0,4));
+      const month = parseInt(selectedDate.value.substring(5,7));
+      const day   = parseInt(selectedDate.value.substring(8,10));
+      d3.selectAll("circle").remove();
+      weatherDataSelected = updateDate(day, month, year);
+      drawCircles();
+    });
+
+    // When a button change, I run the update function
+    d3.selectAll(".checkbox").on("change",updateMap);
+  
+    // And I initialize it at the beginning
+    // update()
   })
   .catch(function(error) {
-    console.log("An error occured in city data");
+    console.log("An error occured in weather data");
     console.log(error);
   });
 
@@ -162,7 +147,6 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
   console.log("An error occured in geo data");
   console.log(error);
 });
-
 
 // Function to populate a dropdown menu
 // id: id (string) of the dropdown menu in the index.html file
