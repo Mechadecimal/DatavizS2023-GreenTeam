@@ -39,14 +39,14 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
   d3.csv("/data/clean_data/cleaned_weather_data.csv")
   .then(function(weatherData) {
 
-    // console.log(weatherData);
+    console.log(weatherData);
 
     // Extract the city names from the city_attributes.csv data
     // It has to be before type conversion!
     const cityNames = weatherData.map(d => d.location).sort();
     const cityNamesSet = new Set(cityNames); // To remove the many duplicates
 
-    const weatherAttributes = ["temperature", "humidity", "pressure", "wind speed"];
+    const weatherAttributes = ["humidity", "temperature", "pressure", "wind_speed"];
 
     // Get the dropdown element and populate it with city names/weather attribute type
     populateDropdownMenu("#city-select", cityNamesSet);
@@ -78,12 +78,19 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
     // console.log(weatherDataSelected);
 
     // Add a scale for bubble size
-    const size = d3.scaleLinear()
-    .domain([0,100])  // What's in the data
-    .range([0, 20])  // Size in pixel
+    var rScale = d3.scaleLinear()
+    .domain([d3.min(weatherData, d => d.humidity), d3.max(weatherData, d => d.humidity)])   // What's in the data
+    .range([2, 15])  // Size in pixel
 
+    function getColor(attribute) {
+      return  attribute == "temperature" ? '#d7191c' :
+              attribute == "humidity"    ? '#abd9e9' :
+              attribute == "wind_speed"  ? '#1b9e77' :
+                                           '#b2abd2' ;
+    };
+    
     // Add circles:
-    function drawCircles() {
+    function drawCircles(attribute) {
       map_svg
       .append("g")
       .selectAll("myCircles")
@@ -92,16 +99,16 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       .attr("class", "Cities")
       .attr("cx", d => projection([d.longitude, d.latitude])[0])
       .attr("cy", d => projection([d.longitude, d.latitude])[1])
-      .attr("r", d => size(d.humidity))
-      .style("fill", "black")
+      .attr("r", d => rScale(d[attribute]))
+      .style("fill", getColor(attribute))
       .attr("fill-opacity", 0.6);
     }
 
-    drawCircles();
+    drawCircles("humidity");
 
     // This function is gonna change the opacity and size of selected and unselected circles
     function updateMap(){
-  
+      var weatherAttribute = document.getElementById("weather-attribute-select").value;
       // For each check box:
       d3.selectAll(".checkbox").each(function(d){
         cb = d3.select(this);
@@ -109,7 +116,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
         // If the box is check, I show the group
         if(cb.property("checked")){
-          map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", d => size(d.humidity));
+          map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1).attr("r", d => rScale(d[weatherAttribute]));
 
         // Otherwise I hide it
         }else{
@@ -118,21 +125,31 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       })
     }
 
-    d3.selectAll(".date").on("change",d => {
+    d3.selectAll(".date").on("change",() => {
       // get a reference to the date element
       var selectedDate = document.getElementById("myDate");
-      console.log(selectedDate.value);
       // get year, month and day as integers
       const year  = parseInt(selectedDate.value.substring(0,4));
       const month = parseInt(selectedDate.value.substring(5,7));
       const day   = parseInt(selectedDate.value.substring(8,10));
       d3.selectAll("circle").remove();
       weatherDataSelected = updateDate(day, month, year);
-      drawCircles();
+      var weatherAttribute = document.getElementById("weather-attribute-select").value;
+      drawCircles(weatherAttribute);
     });
 
     // When a button change, I run the update function
-    d3.selectAll(".checkbox").on("change",updateMap);
+    d3.selectAll(".checkbox").on("change", updateMap);
+
+    d3.selectAll("#weather-attribute-select").on("change", () => {
+      d3.selectAll("circle").remove();
+      var weatherAttribute = document.getElementById("weather-attribute-select").value;
+      // Change the scale domain
+      rScale = d3.scaleLinear()
+        .domain([d3.min(weatherData, d => d[weatherAttribute]), d3.max(weatherData, d => d[weatherAttribute])])   // What's in the data
+        .range([2, 20])  // Size in pixel
+      drawCircles(weatherAttribute);
+    });
   
     // And I initialize it at the beginning
     // update()
