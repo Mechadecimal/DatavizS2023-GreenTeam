@@ -59,7 +59,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       d.temperature = (parseFloat(d.temperature) - 273.15) * 9 / 5 + 32; // K to f conversion
       d.humidity    = parseFloat(d.humidity);
       d.pressure    = parseFloat(d.pressure);
-      d.wind_speed  = parseFloat(d.wind_speed) /  1.609344; // km/hr to mile/hr conversion
+      d.wind_speed  = parseFloat(d.wind_speed) /  1.609344; // km/hr to mph conversion
       // Convert time from string to a Date object
       d.date        = parseTime(d.date);
     });
@@ -91,6 +91,10 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
     
     // Add circles:
     function drawCircles(attribute) {
+
+      function classFinder(attr) {
+        return attribute == attr ? 'selected-li' : 'unselected-li'
+      }
       map_svg
       .append("g")
       .selectAll("myCircles")
@@ -112,10 +116,10 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             <div class="tooltip-title">${d.location}</div>
             <div><i>Weather attributes</i></div>
             <ul>
-              <li>temperature: ${d.temperature.toFixed(0)} \u00B0F</li>
-              <li>humidity: ${d.humidity.toFixed(0)}%</li>
-              <li>pressure: ${d.pressure.toFixed(1)} mbar</li>
-              <li>wind speed: ${d.wind_speed.toFixed(1)} mph</li>
+              <li class=${classFinder('temperature')}>temperature: ${d.temperature.toFixed(0)} \u00B0F</li>
+              <li class=${classFinder('humidity')}>humidity: ${d.humidity.toFixed(0)}%</li>
+              <li class=${classFinder('pressure')}>pressure: ${d.pressure.toFixed(1)} mbar</li>
+              <li class=${classFinder('wind_speed')}>wind speed: ${d.wind_speed.toFixed(1)} mph</li>
             </ul>
           `);
       })
@@ -165,7 +169,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       d3.selectAll("circle").remove();
       var weatherAttribute = document.getElementById("weather-attribute-select").value;
       // Change the scale domain
-      rScale = d3.scaleLinear()
+      rScale = d3.scaleLinear(weatherAttribute)
         .domain([d3.min(weatherData, d => d[weatherAttribute]), d3.max(weatherData, d => d[weatherAttribute])])   // What's in the data
         .range([2, 20])  // Size in pixel
       drawCircles(weatherAttribute);
