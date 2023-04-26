@@ -101,7 +101,28 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       .attr("cy", d => projection([d.longitude, d.latitude])[1])
       .attr("r", d => rScale(d[attribute]))
       .style("fill", getColor(attribute))
-      .attr("fill-opacity", 0.6);
+      .attr("fill-opacity", 0.6)
+      // Tooltip event listeners
+      .on('mouseover', (event,d) => {
+        console.log(event.pageX);
+        d3.select('#tooltip')
+          .style('display', 'block')
+          .style('left', (event.pageX) + 'px')   
+          .style('top', (event.pageY) + 'px')
+          .html(`
+            <div class="tooltip-title">${d.location}</div>
+            <div><i>Weather attributes</i></div>
+            <ul>
+              <li>temperature: ${d.temperature.toFixed(0)} K</li>
+              <li>humidity: ${d.humidity.toFixed(0)}%</li>
+              <li>pressure: ${d.pressure.toFixed(1)} mbar</li>
+              <li>wind speed: ${d.wind_speed.toFixed(1)} km/hr</li>
+            </ul>
+          `);
+      })
+      .on('mouseleave', () => {
+        d3.select('#tooltip').style('display', 'none');
+      });;
     }
 
     drawCircles("humidity");
