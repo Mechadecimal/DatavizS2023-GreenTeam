@@ -56,10 +56,10 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
     weatherData.forEach(d => {
       // Convert string to numerical values for calculations
-      d.temperature = parseFloat(d.temperature);
+      d.temperature = (parseFloat(d.temperature) - 273.15) * 9 / 5 + 32; // K to f conversion
       d.humidity    = parseFloat(d.humidity);
       d.pressure    = parseFloat(d.pressure);
-      d.wind_speed  = parseFloat(d.wind_speed);
+      d.wind_speed  = parseFloat(d.wind_speed) /  1.609344; // km/hr to mile/hr conversion
       // Convert time from string to a Date object
       d.date        = parseTime(d.date);
     });
@@ -104,7 +104,6 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       .attr("fill-opacity", 0.6)
       // Tooltip event listeners
       .on('mouseover', (event,d) => {
-        console.log(event.pageX);
         d3.select('#tooltip')
           .style('display', 'block')
           .style('left', (event.pageX) + 'px')   
@@ -113,10 +112,10 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             <div class="tooltip-title">${d.location}</div>
             <div><i>Weather attributes</i></div>
             <ul>
-              <li>temperature: ${d.temperature.toFixed(0)} K</li>
+              <li>temperature: ${d.temperature.toFixed(0)} \u00B0F</li>
               <li>humidity: ${d.humidity.toFixed(0)}%</li>
               <li>pressure: ${d.pressure.toFixed(1)} mbar</li>
-              <li>wind speed: ${d.wind_speed.toFixed(1)} km/hr</li>
+              <li>wind speed: ${d.wind_speed.toFixed(1)} mph</li>
             </ul>
           `);
       })
