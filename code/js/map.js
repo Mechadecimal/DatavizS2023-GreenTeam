@@ -86,7 +86,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           console.log("filtering stations");
           return stationsData.filter(d => {
             // Be carefull: getMonth() is zero index => January = 0
-            return d.year == year && d.month == month;
+            return d.year == year && d.month == month && d["Sea Level"] > 0;
           });
         }
         
@@ -113,6 +113,11 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       };
 
       function drawStationCircles() {
+        let seaLevelDomain = [d3.min(stationDataSelected, d => d["Sea Level"]), d3.max(stationDataSelected, d => d["Sea Level"])];
+        let colorScale = d3.scaleLinear()
+          .domain(seaLevelDomain)
+          .range(["blue", "red"]);
+        console.log(seaLevelDomain);
         map_svg
           .append("g")
           .selectAll("StationsCircles")
@@ -122,7 +127,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
           .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
           .attr("r", "3")
-          .style("fill", "black")
+          .style("fill", d => colorScale(d["Sea Level"]))
           .attr("fill-opacity", 0.9)
           // Tooltip event listeners
           .on('mouseover', (event,d) => {
@@ -137,7 +142,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
                   <li>ID: ${d.Station}</li>
                   <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
                   <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
-                  <li>sea level: ${d["Sea Level"]}</li>
+                  <li class="selected-li">sea level: ${d["Sea Level"]}</li>
                 </ul>
               `);
           })
@@ -244,6 +249,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           .domain([d3.min(weatherData, d => d[weatherAttribute]), d3.max(weatherData, d => d[weatherAttribute])])   // What's in the data
           .range([2, 20])  // Size in pixel
         drawWeatherCircles(weatherAttribute);
+        drawStationCircles();
       });
     
       // And I initialize it at the beginning
