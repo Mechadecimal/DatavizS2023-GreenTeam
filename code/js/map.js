@@ -38,49 +38,19 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
   // Stations
   d3.csv("/data/clean_data/clean_sea_level_data.csv")
     .then(function(stationsData) {
-      console.log(stationsData);
+      // console.log(stationsData);
       stationsData.forEach(d => {
+        d.month = parseInt(d.Date.split("/")[0]); // Read the month as an int
+        d.year = parseInt(d.Date.split("/")[2]); // Read the yeear as an int
         d.Longitude = '-'.concat(d.Longitude); // All the longitudes are missing a "-"
         d["Sea Level"] = +d["Sea Level"];
       });
-    
-      map_svg
-        .append("g")
-        .selectAll("StationsCircles")
-        .data(stationsData)
-        .join("circle")
-        .attr("class", "Stations")
-        .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
-        .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-        .attr("r", "3")
-        .style("fill", "black")
-        .attr("fill-opacity", 0.6)
-        // Tooltip event listeners
-        .on('mouseover', (event,d) => {
-          d3.select('#tooltip')
-            .style('display', 'block')
-            .style('left', (event.pageX) + 'px')   
-            .style('top', (event.pageY) + 'px')
-            .html(`
-              <div class="tooltip-title">${d.City}</div>
-              <div><i>Sea level measurement station</i></div>
-              <ul>
-                <li>ID: ${d.Station}</li>
-                <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
-                <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
-                <li>sea level: ${d["Sea Level"]}</li>
-              </ul>
-            `);
-        })
-        .on('mouseleave', () => {
-          d3.select('#tooltip').style('display', 'none');
-        });;
 
     // Weather data
     d3.csv("/data/clean_data/cleaned_weather_data.csv")
     .then(function(weatherData) {
 
-      console.log(weatherData);
+      // console.log(weatherData);
 
       // Extract the city names from the city_attributes.csv data
       // It has to be before type conversion!
@@ -107,15 +77,16 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
       // This functions filters data based on the selected date
       function updateDate(day, month, year, data) {
-        if(data = "weather") {
+        if(data == "weather") {
           return weatherData.filter(d => {
             // Be carefull: getMonth() is zero index => January = 0
             return d.date.getFullYear() == year && (d.date.getMonth() + 1) == month && d.date.getDate() == day;
           });
-        } else if (data = "stations") { // Stations data are monthly
+        } else if (data == "stations") { // Stations data are monthly
+          console.log("filtering stations");
           return stationsData.filter(d => {
             // Be carefull: getMonth() is zero index => January = 0
-            return d.date.getFullYear() == year && (d.date.getMonth() + 1) == month;
+            return d.year == year && d.month == month;
           });
         }
         
@@ -123,6 +94,9 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         
       // Choose a date for the default visualization
       var weatherDataSelected = updateDate(1, 1, 2015, "weather");
+      var stationDataSelected = updateDate(1, 1, 2015, "stations");
+
+      console.log(stationDataSelected);
 
       // console.log(weatherDataSelected);
 
@@ -137,13 +111,48 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
                 attribute == "wind_speed"  ? '#1b9e77' :
                                             '#b2abd2' ;
       };
-      
+
+      function drawStationCircles() {
+        map_svg
+          .append("g")
+          .selectAll("StationsCircles")
+          .data(stationDataSelected)
+          .join("circle")
+          .attr("class", "Stations")
+          .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
+          .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
+          .attr("r", "3")
+          .style("fill", "black")
+          .attr("fill-opacity", 0.9)
+          // Tooltip event listeners
+          .on('mouseover', (event,d) => {
+            d3.select('#tooltip')
+              .style('display', 'block')
+              .style('left', (event.pageX) + 'px')   
+              .style('top', (event.pageY) + 'px')
+              .html(`
+                <div class="tooltip-title">${d.City}</div>
+                <div><i>Sea level measurement station</i></div>
+                <ul>
+                  <li>ID: ${d.Station}</li>
+                  <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
+                  <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
+                  <li>sea level: ${d["Sea Level"]}</li>
+                </ul>
+              `);
+          })
+          .on('mouseleave', () => {
+            d3.select('#tooltip').style('display', 'none');
+          });;
+      }
+
       // Add circles:
-      function drawCircles(attribute) {
+      function drawWeatherCircles(attribute) {
 
         function classFinder(attr) {
           return attribute == attr ? 'selected-li' : 'unselected-li'
         }
+
         map_svg
         .append("g")
         .selectAll("CityCircles")
@@ -177,7 +186,8 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         });;
       }
 
-      drawCircles("humidity");
+      drawWeatherCircles("humidity");
+      drawStationCircles();
 
       // This function is gonna change the opacity and size of selected and unselected circles
       function updateMap(){
@@ -196,7 +206,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           // Otherwise I hide it
           }else{
             map_svg.selectAll("."+grp).transition().duration(1000).style("opacity", 0).attr("r", 0);
-            console.log(grp);
+            // console.log(grp);
           }
         })
       }
@@ -204,14 +214,23 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       d3.selectAll(".date").on("change",() => {
         // get a reference to the date element
         var selectedDate = document.getElementById("myDate");
+
         // get year, month and day as integers
         const year  = parseInt(selectedDate.value.substring(0,4));
         const month = parseInt(selectedDate.value.substring(5,7));
         const day   = parseInt(selectedDate.value.substring(8,10));
+
+        // Clear the map
         d3.selectAll("circle").remove();
+
+        // Update the data selections
         weatherDataSelected = updateDate(day, month, year, "weather");
+        stationDataSelected = updateDate(day, month, year, "stations");
+
+        // Draw the updated values
         var weatherAttribute = document.getElementById("weather-attribute-select").value;
-        drawCircles(weatherAttribute);
+        drawWeatherCircles(weatherAttribute);
+        drawStationCircles();
       });
 
       // When a button change, I run the update function
@@ -224,7 +243,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         rScale = d3.scaleLinear(weatherAttribute)
           .domain([d3.min(weatherData, d => d[weatherAttribute]), d3.max(weatherData, d => d[weatherAttribute])])   // What's in the data
           .range([2, 20])  // Size in pixel
-        drawCircles(weatherAttribute);
+        drawWeatherCircles(weatherAttribute);
       });
     
       // And I initialize it at the beginning
