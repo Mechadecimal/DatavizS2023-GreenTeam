@@ -108,7 +108,7 @@
 
     //update function for weather data
     //Todo: add multiple lines
-    function lineChart_updateWeather(startDate, endDate) {
+    function lineChart_updateWeather(startDate, endDate, city = 'all') {
 
         var lineChart_weatherData;
         //filter data by range
@@ -117,6 +117,15 @@
 
             lineChart_weatherData = lineChart_filterData.filter(function(d) {
                 return endDate > d.date > startDate;
+            });
+
+            lineChart_weatherData = lineChart_weatherData.filter(function(d) {
+                if(city == 'all') {
+                    return true;
+                }
+                else {
+                    return d.city == city;
+                }
             });
 
             //(from /map.js)
