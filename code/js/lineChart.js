@@ -41,13 +41,13 @@ var lineChart_height = lineChart_svgHeight - lineChart_margin.top - lineChart_ma
         .scale(lineChart_x);
         lineChart_svg.append("g")
           .attr("transform", "translate(0," + lineChart_height + ")")
-          .attr("class","lineChart_Xaxis")
+          .attr("class","lineChart_xAxis")
 
     // Y axis
     var lineChart_y = d3.scaleLinear().range([lineChart_height, 0]);
     var lineChart_yAxis = d3.axisLeft().scale(lineChart_y);
         lineChart_svg.append("g")
-            .attr("class","lineChart_Yaxis")
+            .attr("class","lineChart_yAxis")
 
     function lineChart_updateDate(day, month, year) {
         return weatherData.filter(d => {
