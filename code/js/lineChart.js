@@ -53,56 +53,23 @@
             return d.date.getFullYear() == year && (d.date.getMonth() + 1) == month && d.date.getDate() == day;
         });
     };
+    var parseTime = d3.timeParse("%Y-%m-%d");
+
+    
 
     // Update function for station data; call at begining and whenever data change is necessary
     function lineChart_updateStation(startDate, endDate) {
 
-        var lineChart_seaData = "/data/clean_data/";
-        var parseTime = d3.timeParse("%Y-%m-%d");
+        d3.csv("/data/clean_data/cleaned_sea_level_data.csv")
+        .then(function(lineChart_filterData) {
 
         //filter data by daterange
+        lineChart_seaData = lineChart_filterData.filter(function(d) {
+        return endDate > d.date > startDate;
+        })
 
-        
+        //parse data variables
 
-        // update X axis:
-        lineChart_x.domain([0, d3.max(lineChart_seaData, function(d) { return d.ser1 }) ]);
-        lineChart_svg.selectAll(".lineChart_xAxis")
-            .transition()
-                .duration(3000)
-                .call(lineChart_xAxis);
-        
-        // update Y axis
-        lineChart_y.domain([0, d3.max(data, function(d) { return d.ser2  }) ]);
-        lineChart_svg.selectAll(".lineChart_yAxis")
-            .transition()
-                .duration(3000)
-                .call(lineChart_yAxis);
-        
-        // update svg
-        var lineChart_update = lineChart_svg.selectAll(".lineTest")
-            .data([data], function(d){ return d.ser1 });
-        
-        // update line
-        lineChart_update
-            .enter()
-                .append("path")
-                    .attr("class","lineTest")
-                .merge(lineChart_update)
-                .transition()
-                    .duration(3000)
-                        .attr("d", d3.line()
-                            .x(function(d) { return lineChart_x(d.ser1); })
-                            .y(function(d) { return lineChart_y(d.ser2); }))
-                        .attr("fill", "none")
-                        .attr("stroke", "black")
-                        .attr("stroke-width", 3)
-    }
-
-    function lineChart_updateWeather(startDate, endDate) {
-
-        var lineChart_weatherData = "/data/clean_data/cleaned_weather_data.csv";
-
-        //filter data by daterange
 
         // update X axis:
         lineChart_x.domain([startDate, endDate]);
@@ -112,7 +79,7 @@
                 .call(lineChart_xAxis);
         
         // update Y axis
-        lineChart_y.domain([0, d3.max(data, function(d) { return d.ser2  }) ]);
+        lineChart_y.domain([0, d3.max(lineChart_seaData, function(d) { return d.SeaLevel  }) ]);
         lineChart_svg.selectAll(".lineChart_yAxis")
             .transition()
                 .duration(3000)
@@ -120,7 +87,7 @@
         
         // update svg
         var lineChart_update = lineChart_svg.selectAll(".lineTest")
-            .data([data], function(d){ return d.ser1 });
+            .data([lineChart_weatherData], function(d){ return d.date });
         
         // update line
         lineChart_update
@@ -131,16 +98,78 @@
                 .transition()
                     .duration(3000)
                         .attr("d", d3.line()
-                            .x(function(d) { return lineChart_x(d.ser1); })
-                            .y(function(d) { return lineChart_y(d.ser2); }))
+                            .x(function(d) { return lineChart_x(d.date); })
+                            .y(function(d) { return lineChart_y(d.SeaLevel); }))
                         .attr("fill", "none")
                         .attr("stroke", "black")
                         .attr("stroke-width", 3)
+        });
+    }
+
+    //update function for weather data
+    //Todo: add multiple lines
+    function lineChart_updateWeather(startDate, endDate) {
+
+        var lineChart_weatherData;
+        //filter data by range
+        d3.csv("/data/clean_data/cleaned_weather_data.csv")
+        .then(function(lineChart_filterData) {
+
+            lineChart_weatherData = lineChart_filterData.filter(function(d) {
+                return endDate > d.date > startDate;
+            });
+
+            //(from /map.js)
+            //parse data variables
+            lineChart_weatherData.forEach(d => {
+                // Convert string to numerical values for calculations
+                d.temperature = parseFloat(d.temperature);
+                d.humidity    = parseFloat(d.humidity);
+                d.pressure    = parseFloat(d.pressure);
+                d.wind_speed  = parseFloat(d.wind_speed);
+                // Convert time from string to a Date object
+                d.date        = parseTime(d.date);
+            });
+
+            // update X axis:
+            lineChart_x.domain([startDate, endDate]);
+            lineChart_svg.selectAll(".lineChart_xAxis")
+                .transition()
+                    .duration(3000)
+                    .call(lineChart_xAxis);
+            
+            // update Y axis
+            lineChart_y.domain([0, d3.max(lineChart_weatherData, function(d) { return d.humidity  }) ]);
+            lineChart_svg.selectAll(".lineChart_yAxis")
+                .transition()
+                    .duration(3000)
+                    .call(lineChart_yAxis);
+            
+            // update svg
+            var lineChart_update = lineChart_svg.selectAll(".lineTest")
+                .data([lineChart_weatherData], function(d){ return d.date });
+            
+            // update line
+            lineChart_update
+                .enter()
+                    .append("path")
+                        .attr("class","lineTest")
+                    .merge(lineChart_update)
+                    .transition()
+                        .duration(3000)
+                            .attr("d", d3.line()
+                                .x(function(d) { return lineChart_x(d.date); })
+                                .y(function(d) { return lineChart_y(d.humidity); }))
+                            .attr("fill", "none")
+                            .attr("stroke", "black")
+                            .attr("stroke-width", 3)
+
+        });
     }
     
         
     // default update call (startdate, enddate)
-    lineChart_update("", "")
+    lineChart_updateWeather(0, 5)
 
     
 
