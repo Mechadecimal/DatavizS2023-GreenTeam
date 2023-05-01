@@ -152,6 +152,46 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
                                             '#b2abd2' ;
       };
 
+      var city = "Los Angeles";
+      // LINE CHART
+      var lineChart_filterData = weatherData.filter(d => d.location == city);
+
+      lineChart_x.domain(d3.extent(lineChart_filterData, d => d.date));
+      lineChart_svg.selectAll(".lineChart_xAxis")
+          .transition()
+              .duration(3000)
+              .call(lineChart_xAxis);
+            
+      
+            
+      // update line
+
+      function drawLineChart(weatherAttribute) {
+        // update Y axis
+        lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
+        lineChart_svg.selectAll(".lineChart_yAxis")
+            .transition()
+                .duration(3000)
+                .call(lineChart_yAxis);
+        console.log(weatherAttribute);
+        lineChart_svg
+          .selectAll(".lineTest")
+          .data([lineChart_filterData], d => d.date)
+          .enter()
+          .append("path")
+          .attr("class","lineTest")
+          .transition()
+          .duration(3000)
+          .attr("d", d3.line()
+            .x(d => lineChart_x(d.date))
+            .y(d => lineChart_y(d[weatherAttribute])))
+          .attr("fill", "none")
+          .attr("stroke", "black")
+          .attr("stroke-width", 1)
+      }
+      
+      drawLineChart("humidity");
+
       function drawStationCircles() {
         let seaLevelDomain = [d3.min(stationDataSelected, d => d["Sea Level"]), d3.max(stationDataSelected, d => d["Sea Level"])];
         let colorScale = d3.scaleLinear()
@@ -231,8 +271,9 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         })
         .on('click', (event, data) => {
           lineChart_filterData = weatherData.filter(d => d.location == data.location);
-          console.log(data.location);
+          d3.selectAll(".lineTest").remove();
           drawLineChart(attribute);
+          
         });
       }
 
@@ -261,45 +302,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         })
       }
 
-      var city = "Los Angeles";
-      // LINE CHART
-      var lineChart_filterData = weatherData.filter(d => d.location == city);
-
-      lineChart_x.domain(d3.extent(lineChart_filterData, d => d.date));
-      lineChart_svg.selectAll(".lineChart_xAxis")
-          .transition()
-              .duration(3000)
-              .call(lineChart_xAxis);
-            
       
-            
-      // update line
-
-      function drawLineChart(weatherAttribute) {
-        // update Y axis
-        lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
-        lineChart_svg.selectAll(".lineChart_yAxis")
-            .transition()
-                .duration(3000)
-                .call(lineChart_yAxis);
-
-        lineChart_svg
-          .selectAll(".lineTest")
-          .data([lineChart_filterData], d => d.date)
-          .enter()
-          .append("path")
-          .attr("class","lineTest")
-          .transition()
-          .duration(3000)
-          .attr("d", d3.line()
-            .x(d => lineChart_x(d.date))
-            .y(d => lineChart_y(d[weatherAttribute])))
-          .attr("fill", "none")
-          .attr("stroke", "black")
-          .attr("stroke-width", 1)
-      }
-      
-      drawLineChart("humidity");
 
       // --- //
 
