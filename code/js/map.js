@@ -90,7 +90,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
     d3.csv("/data/clean_data/cleaned_weather_data.csv")
     .then(function(weatherData) {
 
-      // console.log(weatherData);
+      console.log(weatherData);
 
       // Extract the city names from the city_attributes.csv data
       // It has to be before type conversion!
@@ -228,7 +228,12 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         })
         .on('mouseleave', () => {
           d3.select('#tooltip').style('display', 'none');
-        });;
+        })
+        .on('click', (event, data) => {
+          lineChart_filterData = weatherData.filter(d => d.location == data.location);
+          console.log(data.location);
+          drawLineChart(attribute);
+        });
       }
 
       drawWeatherCircles("humidity");
@@ -258,14 +263,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
       var city = "Los Angeles";
       // LINE CHART
-      var lineChart_filterData = weatherData.filter(function(d) {
-        if(city == 'all') {
-            return true;
-        }
-        else {
-            return d.location == city;
-        }
-      });
+      var lineChart_filterData = weatherData.filter(d => d.location == city);
 
       lineChart_x.domain(d3.extent(lineChart_filterData, d => d.date));
       lineChart_svg.selectAll(".lineChart_xAxis")
@@ -273,14 +271,11 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
               .duration(3000)
               .call(lineChart_xAxis);
             
-      // update svg
-      var lineChart_update = lineChart_svg.selectAll(".lineTest")
-          .data([lineChart_filterData], function(d){ return d.date });
+      
             
       // update line
 
       function drawLineChart(weatherAttribute) {
-
         // update Y axis
         lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
         lineChart_svg.selectAll(".lineChart_yAxis")
@@ -288,20 +283,20 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
                 .duration(3000)
                 .call(lineChart_yAxis);
 
-        lineChart_update
-        .enter()
-        .append("path")
-        .attr("class","lineTest")
-        .merge(lineChart_update)
-        .transition()
-        .duration(3000)
-        .attr("d", d3.line()
-        .x(function(d) { return lineChart_x(d.date); })
-        .y(function(d) { return lineChart_y(
-            weatherAttribute == "humidity" ? d.humidity : weatherAttribute == "temperature" ? d.temperature : weatherAttribute == 'pressure' ? d.pressure : d.wind_speed) }))
-        .attr("fill", "none")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
+        lineChart_svg
+          .selectAll(".lineTest")
+          .data([lineChart_filterData], d => d.date)
+          .enter()
+          .append("path")
+          .attr("class","lineTest")
+          .transition()
+          .duration(3000)
+          .attr("d", d3.line()
+            .x(d => lineChart_x(d.date))
+            .y(d => lineChart_y(d[weatherAttribute])))
+          .attr("fill", "none")
+          .attr("stroke", "black")
+          .attr("stroke-width", 1)
       }
       
       drawLineChart("humidity");
