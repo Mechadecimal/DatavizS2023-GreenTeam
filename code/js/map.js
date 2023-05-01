@@ -17,6 +17,46 @@ var projection = d3.geoMercator()
 var geopath = d3.geoPath()
 .projection(projection);
 
+// LINE CHART PREDEFINES
+// dimensions
+var lineChart_svgWidth  = 600;
+var lineChart_svgHeight = 400;
+
+var lineChart_margin = {
+    top: 30,
+    right: 20,
+    bottom: 100,
+    left:30,
+    };
+
+var lineChart_width = lineChart_svgWidth - lineChart_margin.right - lineChart_margin.left;
+var lineChart_height = lineChart_svgHeight - lineChart_margin.top - lineChart_margin.bottom;
+
+//Data sets should be declared before this file
+
+// Create svg, add properties and nudge to top left
+var lineChart_svg = d3.select("#line-chart-container")
+    .append("svg")
+        .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
+        .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom)
+    .append('g')
+        .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`)
+
+// X axis
+var lineChart_x = d3.scaleTime()
+    .range([0,lineChart_width]);
+var lineChart_xAxis = d3.axisBottom()
+    .scale(lineChart_x);
+lineChart_svg.append("g")
+  .attr("transform", "translate(0," + lineChart_height + ")")
+  .attr("class","lineChart_xAxis")
+
+// Y axis
+var lineChart_y = d3.scaleLinear().range([lineChart_height, 0]);
+var lineChart_yAxis = d3.axisLeft().scale(lineChart_y);
+lineChart_svg.append("g")
+    .attr("class","lineChart_yAxis")
+
 /*  NOTE: By using the following nested structure we make sure geojson polygons stay in the background 
     and cities are drawn on top of it */
 
@@ -83,7 +123,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             return d.date.getFullYear() == year && (d.date.getMonth() + 1) == month && d.date.getDate() == day;
           });
         } else if (data == "stations") { // Stations data are monthly
-          console.log("filtering stations");
+          // console.log("filtering stations");
           return stationsData.filter(d => {
             // Be carefull: getMonth() is zero index => January = 0
             return d.year == year && d.month == month && d["Sea Level"] > 0;
@@ -96,7 +136,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       var weatherDataSelected = updateDate(1, 1, 2015, "weather");
       var stationDataSelected = updateDate(1, 1, 2015, "stations");
 
-      console.log(stationDataSelected);
+      // console.log(stationDataSelected);
 
       // console.log(weatherDataSelected);
 
@@ -117,7 +157,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         let colorScale = d3.scaleLinear()
           .domain(seaLevelDomain)
           .range(["blue", "red"]);
-        console.log(seaLevelDomain);
+        // console.log(seaLevelDomain);
         map_svg
           .append("g")
           .selectAll("StationsCircles")
@@ -216,6 +256,58 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         })
       }
 
+      var city = "Los Angeles";
+      // LINE CHART
+      var lineChart_filterData = weatherData.filter(function(d) {
+        if(city == 'all') {
+            return true;
+        }
+        else {
+            return d.location == city;
+        }
+      });
+
+      lineChart_x.domain(d3.extent(lineChart_filterData, d => d.date));
+      lineChart_svg.selectAll(".lineChart_xAxis")
+          .transition()
+              .duration(3000)
+              .call(lineChart_xAxis);
+            
+      // update svg
+      var lineChart_update = lineChart_svg.selectAll(".lineTest")
+          .data([lineChart_filterData], function(d){ return d.date });
+            
+      // update line
+
+      function drawLineChart(weatherAttribute) {
+
+        // update Y axis
+        lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
+        lineChart_svg.selectAll(".lineChart_yAxis")
+            .transition()
+                .duration(3000)
+                .call(lineChart_yAxis);
+
+        lineChart_update
+        .enter()
+        .append("path")
+        .attr("class","lineTest")
+        .merge(lineChart_update)
+        .transition()
+        .duration(3000)
+        .attr("d", d3.line()
+        .x(function(d) { return lineChart_x(d.date); })
+        .y(function(d) { return lineChart_y(
+            weatherAttribute == "humidity" ? d.humidity : weatherAttribute == "temperature" ? d.temperature : weatherAttribute == 'pressure' ? d.pressure : d.wind_speed) }))
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+      }
+      
+      drawLineChart("humidity");
+
+      // --- //
+
       d3.selectAll(".date").on("change",() => {
         // get a reference to the date element
         var selectedDate = document.getElementById("myDate");
@@ -250,6 +342,11 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           .range([2, 20])  // Size in pixel
         drawWeatherCircles(weatherAttribute);
         drawStationCircles();
+        
+        // Update the line chart
+  
+        d3.selectAll(".lineTest").remove();
+        drawLineChart(weatherAttribute);
       });
     
       // And I initialize it at the beginning
