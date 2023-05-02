@@ -240,7 +240,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             .transition()
                 .duration(3000)
                 .call(lineChart_yAxis);
-        // console.log(weatherAttribute);
+        console.log(weatherAttribute);
         lineChart_svg
           .selectAll(".lineTest")
           .data([lineChart_filterData], d => d.date)
@@ -254,7 +254,8 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             .y(d => lineChart_y(d[weatherAttribute])))
           .attr("fill", "none")
           .attr("stroke", "black")
-          .attr("stroke-width", 1)
+          .attr("stroke-width", 1);
+
       }
       
       drawLineChart("humidity");
@@ -264,7 +265,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         sealevel_lineChart_svg.selectAll(".sealevel-line-chart").remove();
 
         let filteredData = stationsData.filter(d => d.City == city && d["Sea Level"] >= 0);
-        console.log(filteredData);
+        // console.log(filteredData);
 
         let xScale = d3.scaleTime()
           .range([0,lineChart_width])
@@ -300,7 +301,39 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
             .y(d => yScale(d["Sea Level"])))
           .attr("fill", "none")
           .attr("stroke", "black")
-          .attr("stroke-width", 1)
+          .attr("stroke-width", 1);
+
+        sealevel_lineChart_svg
+          .append("g")
+          .selectAll("circle")
+          .data(filteredData)
+          .join("circle")
+          .attr("class","sealevel-line-chart")
+          .attr("cx", d => xScale(d.Date) )
+          .attr("cy", d => yScale(d["Sea Level"]) )
+          .attr("r", "3")
+          .attr("stroke", "black")
+          .attr("opacity", 0.3)
+          .on('mouseover', (event, d) => {
+            d3.select('#tooltip')
+              .style('display', 'block')
+              .style('left', (event.pageX) + 'px')   
+              .style('top', (event.pageY) + 'px')
+              .html(`
+                <div class="tooltip-title">${d.City}</div>
+                <div><i>Sea level measurement station</i></div>
+                <ul>
+                  <li>ID: ${d.Station}</li>
+                  <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
+                  <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
+                  <li class="selected-li">sea level: ${d["Sea Level"]}</li>
+                </ul>
+              `)
+              .on('mouseleave', () => {
+                d3.select('#tooltip').style('display', 'none');
+              });
+          });
+        
       }
       drawStationsLineChart("Corpus Christi");
 
