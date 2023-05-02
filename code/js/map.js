@@ -19,14 +19,14 @@ var geopath = d3.geoPath()
 
 // LINE CHART PREDEFINES
 // dimensions
-var lineChart_svgWidth  = 600;
-var lineChart_svgHeight = 400;
+var lineChart_svgWidth  = 1000;
+var lineChart_svgHeight = 300;
 
 var lineChart_margin = {
     top: 30,
     right: 20,
     bottom: 100,
-    left:30,
+    left:50,
     };
 
 var lineChart_width = lineChart_svgWidth - lineChart_margin.right - lineChart_margin.left;
@@ -35,27 +35,78 @@ var lineChart_height = lineChart_svgHeight - lineChart_margin.top - lineChart_ma
 //Data sets should be declared before this file
 
 // Create svg, add properties and nudge to top left
-var lineChart_svg = d3.select("#line-chart-container")
+var lineChart_svg = d3.select("#weather-line-chart-container")
     .append("svg")
         .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
         .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom)
     .append('g')
-        .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`)
+        .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
+
+var sealevel_lineChart_svg = d3.select("#sealevel-line-chart-container")
+.append("svg")
+    .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
+    .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom)
+.append('g')
+    .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
 
 // X axis
 var lineChart_x = d3.scaleTime()
     .range([0,lineChart_width]);
+
 var lineChart_xAxis = d3.axisBottom()
     .scale(lineChart_x);
+
 lineChart_svg.append("g")
   .attr("transform", "translate(0," + lineChart_height + ")")
-  .attr("class","lineChart_xAxis")
+  .attr("class","lineChart_xAxis");
+
+// X-label
+lineChart_svg
+  .append("text")
+  .attr("transform", `translate(${lineChart_width/2}, ${lineChart_svgHeight - lineChart_margin.bottom})`)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', '14')
+  .attr('fill', 'black')
+  .text('Date');
+
+// Y-label
+lineChart_svg.append("text")
+  .attr("class", "y-label")
+  .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', '14')
+  .attr('fill', 'black')
+  .text('Humidity');
+
+sealevel_lineChart_svg.append("g")
+  .attr("transform", "translate(0," + lineChart_height + ")")
+  .attr("class","lineChart_xAxis");
+
+// X-label
+sealevel_lineChart_svg
+  .append("text")
+  .attr("transform", `translate(${lineChart_width/2}, ${lineChart_svgHeight - lineChart_margin.bottom})`)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', '14')
+  .attr('fill', 'black')
+  .text('Date');
+
+// Y-label
+sealevel_lineChart_svg.append("text")
+  .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
+  .attr('text-anchor', 'middle')
+  .attr('font-size', '14')
+  .attr('fill', 'black')
+  .text('Sea level');
 
 // Y axis
 var lineChart_y = d3.scaleLinear().range([lineChart_height, 0]);
 var lineChart_yAxis = d3.axisLeft().scale(lineChart_y);
+
 lineChart_svg.append("g")
-    .attr("class","lineChart_yAxis")
+    .attr("class","lineChart_yAxis");
+sealevel_lineChart_svg.append("g")
+    .attr("class","lineChart_yAxis");
 
 /*  NOTE: By using the following nested structure we make sure geojson polygons stay in the background 
     and cities are drawn on top of it */
@@ -78,21 +129,23 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
   // Stations
   d3.csv("/data/clean_data/clean_sea_level_data.csv")
     .then(function(stationsData) {
+
+      var stationParseTime = d3.timeParse("%m/%d/%Y");
+
       // console.log(stationsData);
       stationsData.forEach(d => {
         d.month = parseInt(d.Date.split("/")[0]); // Read the month as an int
         d.year = parseInt(d.Date.split("/")[2]); // Read the yeear as an int
         d.Longitude = '-'.concat(d.Longitude); // All the longitudes are missing a "-"
         d["Sea Level"] = +d["Sea Level"];
+        d.Date = stationParseTime(d.Date);
       });
+
+      console.log(stationsData);
 
     // Weather data
     d3.csv("/data/clean_data/cleaned_weather_data.csv")
-    .then(function(weatherData) {
-
-      console.log(weatherData);
-
-      // Extract the city names from the city_attributes.csv data
+    .then(function(weatherData) {// Extract the city names from the city_attributes.csv data
       // It has to be before type conversion!
       const cityNames = weatherData.map(d => d.location).sort();
       const cityNamesSet = new Set(cityNames); // To remove the many duplicates
@@ -167,13 +220,27 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       // update line
 
       function drawLineChart(weatherAttribute) {
+        lineChart_svg.selectAll(".y-label").remove();
+        function unit() {
+          return weatherAttribute == "temperature" ? " (D)":
+                  weatherAttribute == "humidity"   ? " (%)":
+                  weatherAttribute == "pressure"   ? " (mbar)":
+                                                     " (mph)";
+        }
+        lineChart_svg.append("text")
+          .attr("class", "y-label")
+          .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', '14')
+          .attr('fill', 'black')
+          .text(weatherAttribute + unit());
         // update Y axis
         lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
         lineChart_svg.selectAll(".lineChart_yAxis")
             .transition()
                 .duration(3000)
                 .call(lineChart_yAxis);
-        console.log(weatherAttribute);
+        // console.log(weatherAttribute);
         lineChart_svg
           .selectAll(".lineTest")
           .data([lineChart_filterData], d => d.date)
@@ -191,6 +258,51 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       }
       
       drawLineChart("humidity");
+
+      function drawStationsLineChart(city) {
+
+        let filteredData = stationsData.filter(d => d.City == city);
+        console.log(filteredData);
+
+        let xScale = d3.scaleTime()
+          .range([0,lineChart_width])
+          .domain(d3.extent(filteredData, d => d.Date));
+
+        console.log(xScale);
+
+        let yScale = d3.scaleLinear()
+          .range([lineChart_height, 0])
+          .domain([d3.min(filteredData, d => d["Sea Level"]), d3.max(filteredData, d => d["Sea Level"])]);
+
+        let xAxis = d3.axisBottom().scale(xScale);
+        let yAxis = d3.axisLeft().scale(yScale);
+        
+        sealevel_lineChart_svg.selectAll(".lineChart_xAxis")
+            .transition()
+                .duration(3000)
+                .call(xAxis);
+
+        sealevel_lineChart_svg.selectAll(".lineChart_yAxis")
+            .transition()
+                .duration(3000)
+                .call(yAxis);
+
+        sealevel_lineChart_svg
+          .selectAll(".sealevel-line-chart")
+          .data([filteredData], d => d.Date)
+          .enter()
+          .append("path")
+          .attr("class","sealevel-line-chart")
+          .transition()
+          .duration(3000)
+          .attr("d", d3.line()
+            .x(d => xScale(d.Date))
+            .y(d => yScale(d["Sea Level"])))
+          .attr("fill", "none")
+          .attr("stroke", "black")
+          .attr("stroke-width", 1)
+      }
+      drawStationsLineChart("Corpus Christi");
 
       function drawStationCircles() {
         let seaLevelDomain = [d3.min(stationDataSelected, d => d["Sea Level"]), d3.max(stationDataSelected, d => d["Sea Level"])];

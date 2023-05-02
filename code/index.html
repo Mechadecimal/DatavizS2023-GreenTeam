@@ -6,48 +6,45 @@
           <link rel="stylesheet" href="css/style.css">
      </head>
      <body>
-          <div>
-               <label>
-                    Select the city
-                    <select id="city-select"></select>
-               </label>
-          </div>
-          
-          <div>
-               <label>
-                    Select the weather attribute
-                    <select id="weather-attribute-select"></select>
-               </label>
-          </div>
-          
-          <div id="map-container">
+          <div class="grid-container">
                <div>
-                    <input type="checkbox" class="checkbox" value="Cities" checked><label>Cities</label>
-                    <input type="checkbox" class="checkbox" value="Stations" checked><label>Stations</label>
-               </div>
-               <label>
-                    Enter the date
-                    <input type="date" class="date" id="myDate">
-               </label>
-               
-               <p></p> 
-               <svg id="map"></svg>
-          </div>
-          <div>
-               <p>LINE CHART GOES HERE</p>
-               <div id="line-chart-container"></div>
-          </div>
-          <div>
-               <p>SLIDER GOES HERE</p>
-               <p>
-                    <label for="nRadius" 
-                           style="display: inline-block; width: 240px; text-align: right">
-                           radius = <span id="nRadius-value">…</span>
+                    <label>
+                         Select the city
+                         <select id="city-select"></select>
                     </label>
-                    <input type="range" min="1" max="150" id="nRadius">
-                  </p>
+               </div>
+               
+               <div>
+                    <label>
+                         Select the weather attribute
+                         <select id="weather-attribute-select"></select>
+                    </label>
+               </div>
+               
+               <div class="grid-item grid-item-1" id="map-container">
+                    <div>
+                         <input type="checkbox" class="checkbox" value="Cities" checked><label>Cities</label>
+                         <input type="checkbox" class="checkbox" value="Stations" checked><label>Stations</label>
+                    </div>
+                    <label>
+                         Enter the date
+                         <input type="date" class="date" id="myDate">
+                    </label>
+                    
+                    <p></p> 
+                    <svg id="map"></svg>
+               </div>
+               <div class="grid-item grid-item-2">
+                    <p>Weathere Attribute History</p>
+                    <div id="weather-line-chart-container"></div>
+               </div>
+               <div class="grid-item grid-item-3">
+                    <p>Sea Level History</p>
+                    <div id="sealevel-line-chart-container"></div>
+                    
+               </div>
+               <div id="tooltip"></div>
           </div>
-          <div id="tooltip"></div>
 
           
           <script src="https://d3js.org/d3.v7.min.js"></script>
