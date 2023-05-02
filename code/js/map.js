@@ -261,14 +261,14 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
       function drawStationsLineChart(city) {
 
-        let filteredData = stationsData.filter(d => d.City == city);
+        sealevel_lineChart_svg.selectAll(".sealevel-line-chart").remove();
+
+        let filteredData = stationsData.filter(d => d.City == city && d["Sea Level"] >= 0);
         console.log(filteredData);
 
         let xScale = d3.scaleTime()
           .range([0,lineChart_width])
           .domain(d3.extent(filteredData, d => d.Date));
-
-        console.log(xScale);
 
         let yScale = d3.scaleLinear()
           .range([lineChart_height, 0])
@@ -318,9 +318,9 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           .attr("class", "Stations")
           .attr("cx", d => projection([d.Longitude, d.Latitude])[0])
           .attr("cy", d => projection([d.Longitude, d.Latitude])[1])
-          .attr("r", "3")
+          .attr("r", "4")
           .style("fill", d => colorScale(d["Sea Level"]))
-          .attr("fill-opacity", 0.9)
+          .attr("fill-opacity", 0.6)
           // Tooltip event listeners
           .on('mouseover', (event,d) => {
             d3.select('#tooltip')
@@ -340,7 +340,11 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
           })
           .on('mouseleave', () => {
             d3.select('#tooltip').style('display', 'none');
-          });;
+          })
+          .on('click', (event, d) => {
+            console.log(d.City);
+            drawStationsLineChart(d.City);
+          });
       }
 
       // Add circles:
