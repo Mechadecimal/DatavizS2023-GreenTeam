@@ -32,7 +32,12 @@ var lineChart_margin = {
 var lineChart_width = lineChart_svgWidth - lineChart_margin.right - lineChart_margin.left;
 var lineChart_height = lineChart_svgHeight - lineChart_margin.top - lineChart_margin.bottom;
 
-//Data sets should be declared before this file
+var contextheight = 50;
+var contextmargin = {top: 220, 
+    right: lineChart_margin.right, 
+    bottom: 20, 
+    left: lineChart_margin.left,
+    };
 
 // Create svg, add properties and nudge to top left
 var lineChart_svg = d3.select("#weather-line-chart-container")
@@ -42,12 +47,70 @@ var lineChart_svg = d3.select("#weather-line-chart-container")
     .append('g')
         .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
 
-var sealevel_lineChart_svg = d3.select("#sealevel-line-chart-container")
-.append("svg")
+// ---------------------------------------------------------------------------------------- //
+/**
+* Initialize scales/axes and append static chart elements
+*/
+var xScaleFocus = d3.scaleTime()
+    .range([0, lineChart_width]);
+
+var xScaleContext = d3.scaleTime()
+    .range([0, lineChart_width]);
+
+var yScaleFocus = d3.scaleLinear()
+    .range([lineChart_height, 0])
+    .nice();
+
+var yScaleContext = d3.scaleLinear()
+    .range([contextheight, 0])
+    .nice();
+
+// Initialize axes
+var xAxisFocus = d3.axisBottom(xScaleFocus).tickSizeOuter(0);
+var xAxisContext = d3.axisBottom(xScaleContext).tickSizeOuter(0);
+var yAxisFocus = d3.axisLeft(yScaleFocus);
+
+// Define size of SVG drawing area
+var sealevel_svg = d3.select("#sealevel-line-chart-container")
+  .append("svg")
     .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
-    .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom)
-.append('g')
+    .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom);
+
+var sealevel_focus = sealevel_svg
+  .append('g')
     .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
+
+sealevel_focus.append('defs').append('clipPath')
+  .attr('id', 'clip')
+  .append('rect')
+  .attr('width', lineChart_width)
+  .attr('height', lineChart_height);
+
+var sealevel_focusLinePath = sealevel_focus.append('path')
+  .attr('class', 'chart-line');
+
+var sealevel_xAxisFocusG = sealevel_focus.append('g')
+  .attr('class', 'axis x-axis')
+  .attr('transform', `translate(0,${lineChart_height})`);
+
+var sealevel_yAxisFocusG = sealevel_focus.append('g')
+  .attr('class', 'axis y-axis');
+
+// Append focus group with x- and y-axes
+sealevel_context = d3.select("#sealevel-line-chart-container svg").append('g')
+  .attr('transform', `translate(${contextmargin.left},${contextmargin.top})`);
+
+sealevel_contextAreaPath = sealevel_context.append('path')
+  .attr('class', 'chart-area');
+
+sealevel_xAxisContextG = sealevel_context.append('g')
+  .attr('class', 'axis x-axis')
+  .attr('transform', `translate(0,${contextheight})`);
+
+var brushG = sealevel_context.append('g')
+  .attr('class', 'brush x-brush');
+
+
 
 // X axis
 var lineChart_x = d3.scaleTime()
@@ -78,26 +141,26 @@ lineChart_svg.append("text")
   .attr('fill', 'black')
   .text('Humidity');
 
-sealevel_lineChart_svg.append("g")
-  .attr("transform", "translate(0," + lineChart_height + ")")
-  .attr("class","lineChart_xAxis");
+// sealevel_lineChart_svg.append("g")
+//   .attr("transform", "translate(0," + lineChart_height + ")")
+//   .attr("class","lineChart_xAxis");
 
 // X-label
-sealevel_lineChart_svg
-  .append("text")
-  .attr("transform", `translate(${lineChart_width/2}, ${lineChart_svgHeight - lineChart_margin.bottom})`)
-  .attr('text-anchor', 'middle')
-  .attr('font-size', '14')
-  .attr('fill', 'black')
-  .text('Date');
+// sealevel_lineChart_svg
+//   .append("text")
+//   .attr("transform", `translate(${lineChart_width/2}, ${lineChart_svgHeight - lineChart_margin.bottom})`)
+//   .attr('text-anchor', 'middle')
+//   .attr('font-size', '14')
+//   .attr('fill', 'black')
+//   .text('Date');
 
 // Y-label
-sealevel_lineChart_svg.append("text")
-  .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
-  .attr('text-anchor', 'middle')
-  .attr('font-size', '14')
-  .attr('fill', 'black')
-  .text('Sea level');
+// sealevel_lineChart_svg.append("text")
+//   .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
+//   .attr('text-anchor', 'middle')
+//   .attr('font-size', '14')
+//   .attr('fill', 'black')
+//   .text('Sea level');
 
 // Y axis
 var lineChart_y = d3.scaleLinear().range([lineChart_height, 0]);
@@ -105,8 +168,8 @@ var lineChart_yAxis = d3.axisLeft().scale(lineChart_y);
 
 lineChart_svg.append("g")
     .attr("class","lineChart_yAxis");
-sealevel_lineChart_svg.append("g")
-    .attr("class","lineChart_yAxis");
+// sealevel_lineChart_svg.append("g")
+//     .attr("class","lineChart_yAxis");
 
 /*  NOTE: By using the following nested structure we make sure geojson polygons stay in the background 
     and cities are drawn on top of it */
@@ -189,10 +252,6 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       var weatherDataSelected = updateDate(1, 1, 2015, "weather");
       var stationDataSelected = updateDate(1, 1, 2015, "stations");
 
-      // console.log(stationDataSelected);
-
-      // console.log(weatherDataSelected);
-
       // Add a scale for bubble size
       var rScale = d3.scaleLinear()
       .domain([d3.min(weatherData, d => d.humidity), d3.max(weatherData, d => d.humidity)])   // What's in the data
@@ -215,10 +274,7 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
               .duration(3000)
               .call(lineChart_xAxis);
             
-      
-            
       // update line
-
       function drawLineChart(weatherAttribute) {
         lineChart_svg.selectAll(".y-label").remove();
         function unit() {
@@ -259,82 +315,152 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       }
       
       drawLineChart("humidity");
+      // Initialize brush component
+      
 
       function drawStationsLineChart(city) {
+        let brush = d3.brushX()
+        .extent([[0, 0], [lineChart_width, contextheight]])
+        .on('brush', function({selection}) {
+          if (selection) brushed(selection);
+        })
+        .on('end', function({selection}) {
+          if (!selection) brushed(null);
+        });
 
-        sealevel_lineChart_svg.selectAll(".sealevel-line-chart").remove();
+      function brushed(selection) {    
+        // Check if the brush is still active or if it has been removed
+        if (selection) {
+          // Convert given pixel coordinates (range: [x0,x1]) into a time period (domain: [Date, Date])
+          const selectedDomain = selection.map(xScaleContext.invert, xScaleContext);
+      
+          // Update x-scale of the focus view accordingly
+          xScaleFocus.domain(selectedDomain);
+        } else {
+          // Reset x-scale of the focus view (full time period)
+          xScaleFocus.domain(xScaleContext.domain());
+        }
+      
+        // Redraw line and update x-axis labels in focus view
+        sealevel_focusLinePath.attr('d', line);
+        sealevel_xAxisFocusG.call(xAxisFocus);
+      }
+
+        // sealevel_lineChart_svg.selectAll(".sealevel-line-chart").remove();
 
         let filteredData = stationsData.filter(d => d.City == city && d["Sea Level"] >= 0);
-        // console.log(filteredData);
-
-        let xScale = d3.scaleTime()
-          .range([0,lineChart_width])
-          .domain(d3.extent(filteredData, d => d.Date));
-
-        let yScale = d3.scaleLinear()
-          .range([lineChart_height, 0])
-          .domain([d3.min(filteredData, d => d["Sea Level"]), d3.max(filteredData, d => d["Sea Level"])]);
-
-        let xAxis = d3.axisBottom().scale(xScale);
-        let yAxis = d3.axisLeft().scale(yScale);
         
-        sealevel_lineChart_svg.selectAll(".lineChart_xAxis")
-            .transition()
-                .duration(3000)
-                .call(xAxis);
+        let xValue = d => d["Date"];
+        let yValue = d => d["Sea Level"];
 
-        sealevel_lineChart_svg.selectAll(".lineChart_yAxis")
-            .transition()
-                .duration(3000)
-                .call(yAxis);
+        // Initialize line and area generators
+        let line = d3.line()
+            .x(d => xScaleFocus(xValue(d)))
+            .y(d => yScaleFocus(yValue(d)));
 
-        sealevel_lineChart_svg
-          .selectAll(".sealevel-line-chart")
-          .data([filteredData], d => d.Date)
-          .enter()
-          .append("path")
-          .attr("class","sealevel-line-chart")
-          .transition()
-          .duration(3000)
-          .attr("d", d3.line()
-            .x(d => xScale(d.Date))
-            .y(d => yScale(d["Sea Level"])))
-          .attr("fill", "none")
-          .attr("stroke", "black")
-          .attr("stroke-width", 1);
+        let area = d3.area()
+            .x(d => xScaleContext(xValue(d)))
+            .y1(d => yScaleContext(yValue(d)))
+            .y0(contextheight);
 
-        sealevel_lineChart_svg
-          .append("g")
-          .selectAll("circle")
-          .data(filteredData)
-          .join("circle")
-          .attr("class","sealevel-line-chart")
-          .attr("cx", d => xScale(d.Date) )
-          .attr("cy", d => yScale(d["Sea Level"]) )
-          .attr("r", "3")
-          .attr("stroke", "black")
-          .attr("opacity", 0.3)
-          .on('mouseover', (event, d) => {
-            d3.select('#tooltip')
-              .style('display', 'block')
-              .style('left', (event.pageX) + 'px')   
-              .style('top', (event.pageY) + 'px')
-              .html(`
-                <div class="tooltip-title">${d.City}</div>
-                <div><i>Sea level measurement station</i></div>
-                <ul>
-                  <li>ID: ${d.Station}</li>
-                  <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
-                  <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
-                  <li class="selected-li">sea level: ${d["Sea Level"]}</li>
-                </ul>
-              `)
-              .on('mouseleave', () => {
-                d3.select('#tooltip').style('display', 'none');
-              });
-          });
+        // Set the scale input domains
+        xScaleFocus.domain(d3.extent(filteredData, xValue));
+        yScaleFocus.domain(d3.extent(filteredData, yValue));
+        xScaleContext.domain(xScaleFocus.domain());
+        yScaleContext.domain(yScaleFocus.domain());
+
+        let bisectDate = d3.bisector(xValue).left;
+
+        // renderVis();
+        sealevel_focusLinePath
+          .datum(filteredData)
+          .attr('d', line);
+
+        sealevel_contextAreaPath
+          .datum(filteredData)
+          .attr('d', area);
+
+        // Update the axes
+        sealevel_xAxisFocusG.call(xAxisFocus);
+        sealevel_yAxisFocusG.call(yAxisFocus);
+        sealevel_xAxisContextG.call(xAxisContext);
+
+        // Update the brush and define a default position
+        const defaultBrushSelection = [xScaleFocus(new Date('2016-01-01')), xScaleContext.range()[1]];
+        brushG
+          .call(brush)
+          .call(brush.move, defaultBrushSelection);
+        // let xScale = d3.scaleTime()
+        //   .range([0,lineChart_width])
+        //   .domain(d3.extent(filteredData, d => d.Date));
+
+        // let yScale = d3.scaleLinear()
+        //   .range([lineChart_height, 0])
+        //   .domain([d3.min(filteredData, d => d["Sea Level"]), d3.max(filteredData, d => d["Sea Level"])]);
+
+        // let xAxis = d3.axisBottom().scale(xScale);
+        // let yAxis = d3.axisLeft().scale(yScale);
+        
+        // sealevel_lineChart_svg.selectAll(".lineChart_xAxis")
+        //     .transition()
+        //         .duration(3000)
+        //         .call(xAxis);
+
+        // sealevel_lineChart_svg.selectAll(".lineChart_yAxis")
+        //     .transition()
+        //         .duration(3000)
+        //         .call(yAxis);
+
+        // sealevel_lineChart_svg
+        //   .selectAll(".sealevel-line-chart")
+        //   .data([filteredData], d => d.Date)
+        //   .enter()
+        //   .append("path")
+        //   .attr("class","sealevel-line-chart")
+        //   .transition()
+        //   .duration(3000)
+        //   .attr("d", d3.line()
+        //     .x(d => xScale(d.Date))
+        //     .y(d => yScale(d["Sea Level"])))
+        //   .attr("fill", "none")
+        //   .attr("stroke", "black")
+        //   .attr("stroke-width", 1);
+
+        // sealevel_lineChart_svg
+        //   .append("g")
+        //   .selectAll("circle")
+        //   .data(filteredData)
+        //   .join("circle")
+        //   .attr("class","sealevel-line-chart")
+        //   .attr("cx", d => xScale(d.Date) )
+        //   .attr("cy", d => yScale(d["Sea Level"]) )
+        //   .attr("r", "3")
+        //   .attr("stroke", "black")
+        //   .attr("opacity", 0.0)
+        //   .on('mouseover', (event, d) => {
+        //     d3.select('#tooltip')
+        //       .style('display', 'block')
+        //       .style('left', (event.pageX) + 'px')   
+        //       .style('top', (event.pageY) + 'px')
+        //       .html(`
+        //         <div class="tooltip-title">${d.City}</div>
+        //         <div><i>Sea level measurement station</i></div>
+        //         <ul>
+        //           <li>ID: ${d.Station}</li>
+        //           <li>longitude: ${parseFloat(d.Longitude).toFixed(4)}\u00B0</li>
+        //           <li>latitude: ${parseFloat(d.Latitude).toFixed(4)}\u00B0</li>
+        //           <li class="selected-li">sea level: ${d["Sea Level"]}</li>
+        //         </ul>
+        //       `)
+        //       .on('mouseleave', () => {
+        //         d3.select('#tooltip').style('display', 'none');
+        //       });
+        //   });
         
       }
+
+      
+
       drawStationsLineChart("Corpus Christi");
 
       function drawStationCircles() {
