@@ -1,16 +1,17 @@
 // General setup (not data related)
 
 // Set up the map container
-var mapWidth = 600;
-var mapHeight = 300;
+var mapHeight = document.getElementById("map").clientHeight;
+var mapWidth = document.getElementById("map").clientWidth;
+
 var map_svg = d3.select("#map")
 .attr("width", mapWidth)
 .attr("height", mapHeight);
 
 // Define a projection for the map
 var projection = d3.geoMercator()
-.scale(540)
-.center([-78, 29]);
+.scale(600)
+.center([-80, 32]);
 // .translate([1.5 * mapWidth,mapHeight / 2]);
 
 // Create a path generator based on the projection
@@ -19,46 +20,69 @@ var geopath = d3.geoPath()
 
 // LINE CHART PREDEFINES
 // dimensions
-var lineChart_svgWidth  = 1000;
-var lineChart_svgHeight = 300;
+var weather_lineChart_svgWidth  = 0.95 * document.getElementById("weather-line-chart-container").clientWidth;
+var weather_lineChart_svgHeight = document.getElementById("weather-line-chart-container").clientHeight;
 
-var lineChart_margin = {
+var seaLevel_lineChart_svgWidth  = 0.95 * document.getElementById("sealevel-line-chart-container").clientWidth;
+var seaLevel_lineChart_svgHeight = document.getElementById("sealevel-line-chart-container").clientHeight;
+
+var seaLevel_lineChart_margin = {
     top: 30,
     right: 20,
     bottom: 100,
     left:50,
     };
 
-var lineChart_width = lineChart_svgWidth - lineChart_margin.right - lineChart_margin.left;
-var lineChart_height = lineChart_svgHeight - lineChart_margin.top - lineChart_margin.bottom;
+var weather_lineChart_margin = {
+  top: 30,
+  right: 20,
+  bottom: 100,
+  left:50,
+  };
+
+var seaLevel_lineChart_width = seaLevel_lineChart_svgWidth - seaLevel_lineChart_margin.right - seaLevel_lineChart_margin.left;
+var seaLevel_lineChart_height = seaLevel_lineChart_svgHeight - seaLevel_lineChart_margin.top - seaLevel_lineChart_margin.bottom;
+
+var weather_lineChart_width = weather_lineChart_svgWidth - weather_lineChart_margin.right - weather_lineChart_margin.left;
+var weather_lineChart_height = weather_lineChart_svgHeight - weather_lineChart_margin.top - weather_lineChart_margin.bottom;
+// console.log(lineChart_width);
+// console.log(lineChart_height);
 
 var contextheight = 50;
-var contextmargin = {top: 220, 
-    right: lineChart_margin.right, 
+var contextmargin = {top: 180, 
+    right: seaLevel_lineChart_margin.right, 
     bottom: 20, 
-    left: lineChart_margin.left,
+    left: seaLevel_lineChart_margin.left,
     };
 
 // Create svg, add properties and nudge to top left
-var lineChart_svg = d3.select("#weather-line-chart-container")
-    .append("svg")
-        .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
-        .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom)
-    .append('g')
-        .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
+// var seaLevel_lineChart_svg = d3.select("#sealevel-line-chart-container")
+//     .append("svg")
+//         .attr("width", seaLevel_lineChart_width + seaLevel_lineChart_margin.left + seaLevel_lineChart_margin.right)
+//         .attr("height", seaLevel_lineChart_height + seaLevel_lineChart_margin.top + seaLevel_lineChart_margin.bottom)
+//         .attr("class", "heereee")
+//     .append('g')
+//         .attr("transform", `translate (${seaLevel_lineChart_margin.left}, ${seaLevel_lineChart_margin.top})`);
+
+// var weather_lineChart_svg = d3.select("#weather-line-chart-container")
+//     .append("svg")
+//         .attr("width", weather_lineChart_width + weather_lineChart_margin.left + weather_lineChart_margin.right)
+//         .attr("height", weather_lineChart_height + weather_lineChart_margin.top + weather_lineChart_margin.bottom)
+//     .append('g')
+//         .attr("transform", `translate (${weather_lineChart_margin.left}, ${weather_lineChart_margin.top})`);
 
 // ---------------------------------------------------------------------------------------- //
 /**
 * Initialize scales/axes and append static chart elements
 */
 var xScaleFocus = d3.scaleTime()
-    .range([0, lineChart_width]);
+    .range([0, seaLevel_lineChart_width]);
 
 var xScaleContext = d3.scaleTime()
-    .range([0, lineChart_width]);
+    .range([0, seaLevel_lineChart_width]);
 
 var yScaleFocus = d3.scaleLinear()
-    .range([lineChart_height, 0])
+    .range([seaLevel_lineChart_height, 0])
     .nice();
 
 var yScaleContext = d3.scaleLinear()
@@ -73,34 +97,65 @@ var yAxisFocus = d3.axisLeft(yScaleFocus);
 // Define size of SVG drawing area
 var sealevel_svg = d3.select("#sealevel-line-chart-container")
   .append("svg")
-    .attr("width", lineChart_width + lineChart_margin.left + lineChart_margin.right)
-    .attr("height", lineChart_height + lineChart_margin.top + lineChart_margin.bottom);
+    .attr("width", seaLevel_lineChart_width + seaLevel_lineChart_margin.left + seaLevel_lineChart_margin.right)
+    .attr("height", seaLevel_lineChart_height + seaLevel_lineChart_margin.top + seaLevel_lineChart_margin.bottom);
+
+var weather_svg = d3.select("#weather-line-chart-container")
+  .append("svg")
+    .attr("width", weather_lineChart_width + weather_lineChart_margin.left + weather_lineChart_margin.right)
+    .attr("height", weather_lineChart_height + weather_lineChart_margin.top + weather_lineChart_margin.bottom);
 
 var sealevel_focus = sealevel_svg
   .append('g')
-    .attr("transform", `translate (${lineChart_margin.left}, ${lineChart_margin.top})`);
+    .attr("transform", `translate (${seaLevel_lineChart_margin.left}, ${seaLevel_lineChart_margin.top})`);
+
+var weather_focus = weather_svg
+  .append('g')
+    .attr("transform", `translate (${weather_lineChart_margin.left}, ${weather_lineChart_margin.top})`);
 
 sealevel_focus.append('defs').append('clipPath')
   .attr('id', 'clip')
   .append('rect')
-  .attr('width', lineChart_width)
-  .attr('height', lineChart_height);
+  .attr('width', seaLevel_lineChart_width)
+  .attr('height', seaLevel_lineChart_height);
+
+weather_focus.append('defs').append('clipPath')
+  .attr('id', 'clip')
+  .append('rect')
+  .attr('width', weather_lineChart_width)
+  .attr('height', weather_lineChart_height);
 
 var sealevel_focusLinePath = sealevel_focus.append('path')
   .attr('class', 'chart-line');
 
+var weather_focusLinePath = weather_focus.append('path')
+  .attr('class', 'chart-line');
+
 var sealevel_xAxisFocusG = sealevel_focus.append('g')
   .attr('class', 'axis x-axis')
-  .attr('transform', `translate(0,${lineChart_height})`);
+  .attr('transform', `translate(0,${seaLevel_lineChart_height})`);
+
+var weather_xAxisFocusG = weather_focus.append('g')
+  .attr('class', 'axis x-axis')
+  .attr('transform', `translate(0,${weather_lineChart_height})`);
 
 var sealevel_yAxisFocusG = sealevel_focus.append('g')
   .attr('class', 'axis y-axis');
 
+var weather_yAxisFocusG = weather_focus.append('g')
+  .attr('class', 'axis y-axis');
+
 var sealevel_tooltipTrackingArea = sealevel_focus.append('rect')
-        .attr('width', lineChart_width)
-        .attr('height', lineChart_height)
+        .attr('width', seaLevel_lineChart_width)
+        .attr('height', seaLevel_lineChart_height)
         .attr('fill', 'none')
         .attr('pointer-events', 'all');
+
+var weather_tooltipTrackingArea = weather_focus.append('rect')
+  .attr('width', weather_lineChart_width)
+  .attr('height', weather_lineChart_height)
+  .attr('fill', 'none')
+  .attr('pointer-events', 'all');
 
 // Empty tooltip group (hidden by default)
 var sealevel_tooltip = sealevel_focus.append('g')
@@ -112,7 +167,16 @@ sealevel_tooltip.append('circle')
 
 sealevel_tooltip.append('text');
 
-// Append focus group with x- and y-axes
+var weather_tooltip = weather_focus.append('g')
+  .attr('class', 'tooltip')
+  .style('display', 'none');
+
+  weather_tooltip.append('circle')
+  .attr('r', 4);
+
+  weather_tooltip.append('text');
+
+// Append context group with x- and y-axes
 sealevel_context = d3.select("#sealevel-line-chart-container svg").append('g')
   .attr('transform', `translate(${contextmargin.left},${contextmargin.top})`);
 
@@ -130,32 +194,36 @@ var brushG = sealevel_context.append('g')
 
 // X axis
 var lineChart_x = d3.scaleTime()
-    .range([0,lineChart_width]);
+    .range([0,seaLevel_lineChart_width]);
 
 var lineChart_xAxis = d3.axisBottom()
     .scale(lineChart_x);
 
-lineChart_svg.append("g")
-  .attr("transform", "translate(0," + lineChart_height + ")")
-  .attr("class","lineChart_xAxis");
+// seaLevel_lineChart_svg.append("g")
+//   .attr("transform", "translate(0," + seaLevel_lineChart_height + ")")
+//   .attr("class","lineChart_xAxis");
+
+// weather_lineChart_svg.append("g")
+// .attr("transform", "translate(0," + weather_lineChart_height + ")")
+// .attr("class","lineChart_xAxis");
 
 // X-label
-lineChart_svg
-  .append("text")
-  .attr("transform", `translate(${lineChart_width/2}, ${lineChart_svgHeight - lineChart_margin.bottom})`)
-  .attr('text-anchor', 'middle')
-  .attr('font-size', '14')
-  .attr('fill', 'black')
-  .text('Date');
+// seaLevel_lineChart_svg
+//   .append("text")
+//   .attr("transform", `translate(${seaLevel_lineChart_width/2}, ${seaLevel_lineChart_svgHeight - seaLevel_lineChart_margin.bottom})`)
+//   .attr('text-anchor', 'middle')
+//   .attr('font-size', '14')
+//   .attr('fill', 'black')
+//   .text('Date');
 
 // Y-label
-lineChart_svg.append("text")
-  .attr("class", "y-label")
-  .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
-  .attr('text-anchor', 'middle')
-  .attr('font-size', '14')
-  .attr('fill', 'black')
-  .text('Humidity');
+// seaLevel_lineChart_svg.append("text")
+//   .attr("class", "y-label")
+//   .attr("transform", `rotate(-90, ${-seaLevel_lineChart_margin.left + 10}, ${seaLevel_lineChart_height / 2}) translate(0, ${seaLevel_lineChart_height / 2})`)
+//   .attr('text-anchor', 'middle')
+//   .attr('font-size', '14')
+//   .attr('fill', 'black')
+//   .text('Humidity');
 
 // sealevel_lineChart_svg.append("g")
 //   .attr("transform", "translate(0," + lineChart_height + ")")
@@ -179,11 +247,11 @@ lineChart_svg.append("text")
 //   .text('Sea level');
 
 // Y axis
-var lineChart_y = d3.scaleLinear().range([lineChart_height, 0]);
+var lineChart_y = d3.scaleLinear().range([seaLevel_lineChart_height, 0]);
 var lineChart_yAxis = d3.axisLeft().scale(lineChart_y);
 
-lineChart_svg.append("g")
-    .attr("class","lineChart_yAxis");
+// seaLevel_lineChart_svg.append("g")
+//     .attr("class","lineChart_yAxis");
 // sealevel_lineChart_svg.append("g")
 //     .attr("class","lineChart_yAxis");
 
@@ -285,35 +353,35 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
       var lineChart_filterData = weatherData.filter(d => d.location == city);
 
       lineChart_x.domain(d3.extent(lineChart_filterData, d => d.date));
-      lineChart_svg.selectAll(".lineChart_xAxis")
-          .transition()
-              .duration(3000)
-              .call(lineChart_xAxis);
+      // seaLevel_lineChart_svg.selectAll(".lineChart_xAxis")
+      //     .transition()
+      //         .duration(3000)
+      //         .call(lineChart_xAxis);
             
       // update line
       function drawLineChart(weatherAttribute) {
-        lineChart_svg.selectAll(".y-label").remove();
+        seaLevel_lineChart_svg.selectAll(".y-label").remove();
         function unit() {
           return weatherAttribute == "temperature" ? " (D)":
                   weatherAttribute == "humidity"   ? " (%)":
                   weatherAttribute == "pressure"   ? " (mbar)":
                                                      " (mph)";
         }
-        lineChart_svg.append("text")
+        seaLevel_lineChart_svg.append("text")
           .attr("class", "y-label")
-          .attr("transform", `rotate(-90, ${-lineChart_margin.left + 10}, ${lineChart_height / 2}) translate(0, ${lineChart_height / 2})`)
+          .attr("transform", `rotate(-90, ${-seaLevel_lineChart_margin.left + 10}, ${seaLevel_lineChart_height / 2}) translate(0, ${seaLevel_lineChart_height / 2})`)
           .attr('text-anchor', 'middle')
           .attr('font-size', '14')
           .attr('fill', 'black')
           .text(weatherAttribute + unit());
         // update Y axis
         lineChart_y.domain([0, d3.max(lineChart_filterData, d => d[weatherAttribute])]);
-        lineChart_svg.selectAll(".lineChart_yAxis")
+        seaLevel_lineChart_svg.selectAll(".lineChart_yAxis")
             .transition()
                 .duration(3000)
                 .call(lineChart_yAxis);
         console.log(weatherAttribute);
-        lineChart_svg
+        seaLevel_lineChart_svg
           .selectAll(".lineTest")
           .data([lineChart_filterData], d => d.date)
           .enter()
@@ -330,13 +398,13 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
 
       }
       
-      drawLineChart("humidity");
+      // drawLineChart("humidity");
       // Initialize brush component
       
 
       function drawStationsLineChart(city) {
         let brush = d3.brushX()
-        .extent([[0, 0], [lineChart_width, contextheight]])
+        .extent([[0, 0], [seaLevel_lineChart_width, contextheight]])
         .on('brush', function({selection}) {
           if (selection) brushed(selection);
         })
