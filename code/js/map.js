@@ -96,6 +96,22 @@ var sealevel_xAxisFocusG = sealevel_focus.append('g')
 var sealevel_yAxisFocusG = sealevel_focus.append('g')
   .attr('class', 'axis y-axis');
 
+var sealevel_tooltipTrackingArea = sealevel_focus.append('rect')
+        .attr('width', lineChart_width)
+        .attr('height', lineChart_height)
+        .attr('fill', 'none')
+        .attr('pointer-events', 'all');
+
+// Empty tooltip group (hidden by default)
+var sealevel_tooltip = sealevel_focus.append('g')
+  .attr('class', 'tooltip')
+  .style('display', 'none');
+
+sealevel_tooltip.append('circle')
+  .attr('r', 4);
+
+sealevel_tooltip.append('text');
+
 // Append focus group with x- and y-axes
 sealevel_context = d3.select("#sealevel-line-chart-container svg").append('g')
   .attr('transform', `translate(${contextmargin.left},${contextmargin.top})`);
@@ -379,6 +395,33 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         sealevel_contextAreaPath
           .datum(filteredData)
           .attr('d', area);
+
+        sealevel_tooltipTrackingArea
+          .on('mouseenter', () => {
+            sealevel_tooltip.style('display', 'block');
+          })
+          .on('mouseleave', () => {
+            sealevel_tooltip.style('display', 'none');
+          })
+          .on('mousemove', function(event) {
+            // Get date that corresponds to current mouse x-coordinate
+            const xPos = d3.pointer(event)[0]; // First array element is x, second is y
+            const date = xScaleFocus.invert(xPos);
+
+            // Find nearest data point
+            const index = bisectDate(filteredData, date, 1);
+            const a = filteredData[index - 1];
+            const b = filteredData[index];
+            const d = b && (date - a.Date > b.Date - date) ? b : a; 
+
+            // Update tooltip
+            sealevel_tooltip.select('circle')
+                .attr('transform', `translate(${xScaleFocus(d.Date)},${yScaleFocus(d["Sea Level"])})`);
+            
+            sealevel_tooltip.select('text')
+                .attr('transform', `translate(${xScaleFocus(d.Date)},${(yScaleFocus(d["Sea Level"])) - 15})`)
+                .text(d["Sea Level"]);
+          });
 
         // Update the axes
         sealevel_xAxisFocusG.call(xAxisFocus);
