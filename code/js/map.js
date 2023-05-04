@@ -676,6 +676,15 @@ d3.json("data/geojson/gz_2010_us_040_00_500k.geojson").then(function(geojson) {
         d3.selectAll(".lineTest").remove();
         drawLineChart(weatherAttribute);
       });
+
+      d3.selectAll("#city-select").on("change", () => {
+        let selectedCity = document.getElementById("city-select").value;
+        let weatherAttribute = document.getElementById("weather-attribute-select").value;
+        console.log(selectedCity);
+        lineChart_filterData = weatherData.filter(d => d.location == selectedCity);
+        // d3.selectAll(".lineTest").remove();
+        drawLineChart(weatherAttribute);
+      });
     
       // And I initialize it at the beginning
       // update()
