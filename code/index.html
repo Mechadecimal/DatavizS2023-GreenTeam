@@ -6,29 +6,42 @@
           <link rel="stylesheet" href="css/style.css">
      </head>
      <body>
+          <h1>Sea Level and Weather Attributes</h1>
           <div class="grid-container">              
-               <div class="grid-item grid-item-controlls" id="map-container">
-                    <div>
+               <div class="grid-item grid-item-controlls">
+                    <div style="height: 10%"></div>
+                    <div class="controller">
                          <label>
                               Select the city
-                              <select id="city-select"></select>
+                              <select id="city-select" title="Select a city to visualize the weather attribute history"></select>
                          </label>
                     </div>
                     
-                    <div>
+                    <div class="controller">
                          <label>
                               Select the weather attribute
-                              <select id="weather-attribute-select"></select>
+                              <select id="weather-attribute-select" title="Select a weather attribute to be shown on the map and the time history chart"></select>
                          </label>
                     </div>
-                    <div>
-                         <input type="checkbox" class="checkbox" value="Cities" checked><label>Cities</label>
-                         <input type="checkbox" class="checkbox" value="Stations" checked><label>Stations</label>
+
+                    <div class="controller">
+                         <label title="Specify a date for the map vizualization (affects both weather attributes and sea level measurements)">
+                              Enter the date
+                              <input type="date" class="date" id="myDate" min="2012-01-01" max="2017-12-31">
+                         </label>
                     </div>
-                    <label>
-                         Enter the date
-                         <input type="date" class="date" id="myDate">
-                    </label>
+
+                    <div class="controller">
+                         <input type="checkbox" class="checkbox" value="Cities" checked><label title="toggle on/off to show/hide the weather attribute locations on the map">Cities</label>
+                         <input type="checkbox" class="checkbox" value="Stations" checked><label title="toggle on/off to show/hide the sea level measurement stations on the map">Stations</label>
+                    </div>
+                    <p>Notes: 
+                         <br>Sea levels data has monthly resolution (the Day field does not affect it)
+                         
+                         <br><br>Sea levels data covers 2012-2017. Some weather attributes stations do not cover the full period. 
+                         If you do not see anything in the chart below, use the selector at the buttom of the page to select a covered time span.
+                    </p>
+                    
                </div>
 
                <div class="grid-item grid-item-map" id="map-container">
